@@ -1,0 +1,130 @@
+import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
+import 'tabs/home_tab.dart';
+import 'tabs/search_tab.dart';
+import 'tabs/library_tab.dart';
+import 'tabs/profile_tab.dart';
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  int _currentIndex = 0;
+  late PageController _pageController;
+  late AnimationController _animationController;
+  late List<Animation<double>> _tabIconAnimations;
+
+  final List<Widget> _screens = [
+    const HomeTab(),
+    const SearchTab(),
+    const LibraryTab(),
+    const ProfileTab(),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    _tabIconAnimations = List.generate(
+      4,
+      (index) => Tween<double>(begin: 1.0, end: 1.2).animate(
+        CurvedAnimation(
+          parent: _animationController,
+          curve: Interval(
+            0.1 * index,
+            0.1 * index + 0.6,
+            curve: Curves.easeOut,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _onTabTapped(int index) {
+    if (_currentIndex == index) return;
+
+    setState(() {
+      _currentIndex = index;
+    });
+
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+
+    _animationController.reset();
+    _animationController.forward();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+          _animationController.reset();
+          _animationController.forward();
+        },
+        children: _screens,
+      ),
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          border: Border(top: BorderSide(color: AppColors.divider, width: 0.5)),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.transparent, Color(0x20000000)],
+          ),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: _onTabTapped,
+          type: BottomNavigationBarType.fixed,
+          backgroundColor: AppColors.primaryDark,
+          selectedItemColor: AppColors.primaryColor,
+          unselectedItemColor: AppColors.textSecondary,
+          items: List.generate(4, (index) {
+            final iconData =
+                [
+                  Icons.home,
+                  Icons.search,
+                  Icons.library_music,
+                  Icons.person,
+                ][index];
+
+            final label = ['Home', 'Search', 'Library', 'Profile'][index];
+
+            return BottomNavigationBarItem(
+              icon: ScaleTransition(
+                scale: _tabIconAnimations[index],
+                child: Icon(iconData),
+              ),
+              label: label,
+            );
+          }),
+        ),
+      ),
+    );
+  }
+}
