@@ -1,14 +1,21 @@
 import 'package:just_audio/just_audio.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:logging/logging.dart';
 
 class AudioPlayerManager {
-  AudioPlayerManager({
-    required this.songUrl,
-  });
-
-  final player = AudioPlayer();
-  Stream<DurationState>? durationState;
-  String songUrl;
+  // AudioPlayerManager({
+  //   required this.songUrl,
+  // });
+  AudioPlayerManager({required this.songUrl}) {
+    _initLogger();
+  }
+  // final player = AudioPlayer();
+  // Stream<DurationState>? durationState;
+  // String songUrl;
+  final AudioPlayer player = AudioPlayer();
+  late final Stream<DurationState> durationState;
+  final String songUrl;
+  final Logger _logger = Logger('AudioPlayerManager');
 
   // void init() {
   //   durationState = Rx.combineLatest2<Duration, PlaybackEvent, DurationState>(
@@ -21,25 +28,36 @@ class AudioPlayerManager {
   //   player.setUrl(songUrl);
   // }
   Future<void> init() async {
-  durationState = Rx.combineLatest2<Duration, PlaybackEvent, DurationState>(
-    player.positionStream,
-    player.playbackEventStream,
-    (position, playbackEvent) => DurationState(
-      progess: position,
-      buffered: playbackEvent.bufferedPosition,
-      total: playbackEvent.duration,
-    ),
-  );
+    durationState = Rx.combineLatest2<Duration, PlaybackEvent, DurationState>(
+      player.positionStream,
+      player.playbackEventStream,
+      (position, playbackEvent) => DurationState(
+        progess: position,
+        buffered: playbackEvent.bufferedPosition,
+        total: playbackEvent.duration,
+      ),
+    );
 
-  try {
-    print('Loading song: $songUrl');
-    await player.setUrl(songUrl); // ⚠️ Quan trọng: thêm await
-    print('Song loaded successfully!');
-  } catch (e) {
-    print('Error loading song: $e');
+    try {
+        _logger.info('Loading song: $songUrl');
+        await player.setUrl(songUrl);
+        _logger.info('Song loaded successfully!');
+      } catch (e, stackTrace) {
+        _logger.severe('Error loading song', e, stackTrace);
+    }
   }
-}
+   void dispose() {
+    player.dispose();
+    _logger.info('AudioPlayer disposed');
+  }
 
+  void _initLogger() {
+    Logger.root.level = Level.ALL;
+    Logger.root.onRecord.listen((record) {
+      // In ra console
+      print('${record.level.name}: ${record.time}: ${record.message}');
+    });
+  }
 }
 
 class DurationState {

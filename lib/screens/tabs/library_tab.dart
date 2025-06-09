@@ -20,7 +20,7 @@ class _LibraryTabState extends State<LibraryTab> {
   // Song? _currentlyPlayingSong;
   // AudioPlayerManager? _audioPlayerManager;
   bool _isLoading = true;
-  
+
   @override
   void initState() {
     super.initState();
@@ -31,14 +31,17 @@ class _LibraryTabState extends State<LibraryTab> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PlayingMusicInterface(
-          song: song,
-          audioPlayerManager: AudioPlayerManager(songUrl: song.source), // Dummy nếu chưa cần phát nhạc
-          onNext: () {},
-          onPrevious: () {},
-          onShuffle: (isShuffled) {},
-          onRepeat: (loopMode) {},
-        ),
+        builder:
+            (context) => PlayingMusicInterface(
+              song: song,
+              audioPlayerManager: AudioPlayerManager(
+                songUrl: song.source,
+              ), // Dummy nếu chưa cần phát nhạc
+              onNext: () {},
+              onPrevious: () {},
+              onShuffle: (isShuffled) {},
+              onRepeat: (loopMode) {},
+            ),
       ),
     );
   }
@@ -78,7 +81,105 @@ class _LibraryTabState extends State<LibraryTab> {
           ),
           actions: [
             IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-            IconButton(icon: const Icon(Icons.add), onPressed: () {}),
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: AppColors.background,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(16),
+                    ),
+                  ),
+                  builder: (context) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 24,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 4,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[700],
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                          ListTile(
+                            leading: const Icon(
+                              Icons.music_note,
+                              color: Colors.white,
+                            ),
+                            title: const Text(
+                              'Danh sách phát',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            subtitle: const Text(
+                              'Tạo danh sách phát gồm bài hát hoặc tập',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                            onTap: () {
+                              // Xử lý khi chọn mục này
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(
+                              Icons.group,
+                              color: Colors.white,
+                            ),
+                            title: const Text(
+                              'Danh sách phát cộng tác',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            subtitle: const Text(
+                              'Mời bạn bè cùng sáng tạo',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                            onTap: () {
+                              // Xử lý khi chọn mục này
+                              Navigator.pop(context);
+                            },
+                          ),
+                          ListTile(
+                            leading: const Icon(
+                              Icons.link,
+                              color: Colors.white,
+                            ),
+                            title: const Text(
+                              'Giai điệu chung',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            subtitle: const Text(
+                              'Kết hợp các gu nghe nhạc trong một danh sách phát chia...',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                            onTap: () {
+                              // Xử lý khi chọn mục này
+                              Navigator.pop(context);
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ],
         ),
         SliverToBoxAdapter(
@@ -180,65 +281,39 @@ class _LibraryTabState extends State<LibraryTab> {
         //     );
         //   }, childCount: 20),
         // ),
-       SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16), // 👈 thu 2 bên
-            child: SafeArea(
-              child: _isLoading
-                  ? const Center(
-                      key: ValueKey('loading'),
-                      child: CircularProgressIndicator(),
-                  )
-                : _buildSongsList(),
-            ),
-          ),
+        SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+            final song = _songs![index]; // danh sách bài hát của anh
+            return ListTile(
+              onTap: () {
+                _playSong(song);
+              },
+              leading: Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(4),
+                  image: DecorationImage(
+                    image: NetworkImage(song.image),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              title: Text(
+                song.title,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              subtitle: Text(
+                song.artist,
+                style: const TextStyle(color: AppColors.textSecondary),
+              ),
+            );
+          }, childCount: _songs?.length),
         ),
       ],
-    );
-  }
-  Widget _buildSongsList() {
-    return ListView.builder(
-      shrinkWrap: true,
-      key: const ValueKey('songs_list'),
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: _songs?.length,
-      itemBuilder: (context, index) {
-        final song = _songs![index];
-        return _buildSongItem(song);
-      },
-    );
-  }
-
-  Widget _buildSongItem(Song song) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(vertical: 6.0),
-      leading: ClipRRect(
-        borderRadius: BorderRadius.circular(4),
-        child: Image.network(
-          song.image,
-          width: 50,
-          height: 50,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return Container(
-              width: 50,
-              height: 50,
-              color: Colors.grey[800],
-              child: const Icon(Icons.music_note, color: Colors.white),
-            );
-          },
-        ),
-      ),
-      title: Text(
-        song.title,
-        style: const TextStyle(color: Colors.white),
-      ),
-      subtitle: Text(
-        song.artist,
-        style: const TextStyle(color: Colors.grey),
-      ),
-      trailing: const Icon(Icons.more_vert, color: Colors.grey),
-      onTap: () => _playSong(song),
     );
   }
 }
