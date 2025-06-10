@@ -50,11 +50,6 @@ class _LibraryTabState extends State<LibraryTab> {
     final songs = await SongService.loadData();
     setState(() {
       _songs = songs;
-      // if (songs.isNotEmpty) {
-      //   _currentlyPlayingSong = songs.first;
-      //   _audioPlayerManager = AudioPlayerManager(songUrl: songs.first.source);
-      //   _audioPlayerManager?.init();
-      // }
       _isLoading = false;
     });
   }
@@ -251,68 +246,49 @@ class _LibraryTabState extends State<LibraryTab> {
             ),
           ),
         ),
-        // SliverList(
-        //   delegate: SliverChildBuilderDelegate((context, index) {
-        //     return ListTile(
-        //       leading: Container(
-        //         width: 56,
-        //         height: 56,
-        //         decoration: BoxDecoration(
-        //           borderRadius: BorderRadius.circular(4),
-        //           image: DecorationImage(
-        //             image: NetworkImage(
-        //               'https://picsum.photos/56/56?random=$index',
-        //             ),
-        //             fit: BoxFit.cover,
-        //           ),
-        //         ),
-        //       ),
-        //       title: Text(
-        //         'Playlist ${index + 1}',
-        //         style: const TextStyle(
-        //           color: AppColors.textPrimary,
-        //           fontWeight: FontWeight.w500,
-        //         ),
-        //       ),
-        //       subtitle: const Text(
-        //         'Playlist • User Name',
-        //         style: TextStyle(color: AppColors.textSecondary),
-        //       ),
-        //     );
-        //   }, childCount: 20),
-        // ),
-        SliverList(
-          delegate: SliverChildBuilderDelegate((context, index) {
-            final song = _songs![index]; // danh sách bài hát của anh
-            return ListTile(
-              onTap: () {
-                _playSong(song);
-              },
-              leading: Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(4),
-                  image: DecorationImage(
-                    image: NetworkImage(song.image),
-                    fit: BoxFit.cover,
+        if (_isLoading)
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 700,
+              child: Center(
+                key: ValueKey('loading'),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+          )
+        else
+          SliverList(
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final song = _songs![index];
+              return ListTile(
+                onTap: () {
+                  _playSong(song);
+                },
+                leading: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(4),
+                    image: DecorationImage(
+                      image: NetworkImage(song.image),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-              ),
-              title: Text(
-                song.title,
-                style: const TextStyle(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w500,
+                title: Text(
+                  song.title,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-              subtitle: Text(
-                song.artist,
-                style: const TextStyle(color: AppColors.textSecondary),
-              ),
-            );
-          }, childCount: _songs?.length),
-        ),
+                subtitle: Text(
+                  song.artist,
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+              );
+            }, childCount: _songs?.length),
+          ),
       ],
     );
   }

@@ -30,7 +30,7 @@ class PlayingMusicInterface extends StatefulWidget {
 }
 
 class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   bool _isShuffled = false;
   // bool _isPlaying = false;
   LoopMode _loopMode = LoopMode.off;
@@ -38,8 +38,11 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   int _currentLyricIndex = 0;
   bool _showLyrics = false;
   late AnimationController _imageAnimationController;
+  late AnimationController _pageAnimationController;
+  late Animation<double> _pageAnimation;
   PaletteGenerator? paletteGenerator;
   Color defaultColor = Colors.black;
+  double _volume = 1.0;
 
   @override
   void initState() {
@@ -48,10 +51,52 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
       vsync: this,
       duration: const Duration(milliseconds: 12000),
     )..repeat();
-    // _imageAnimationController.repeat();
+
+    _pageAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _pageAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _pageAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     _initPlayer();
-    // Đảm bảo ảnh có sẵn trước khi sinh màu
     _generateColors();
+  }
+
+  @override
+  void dispose() {
+    _pageAnimationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleView() {
+    if (_showLyrics) {
+      _pageAnimationController.reverse();
+    } else {
+      _pageAnimationController.forward();
+    }
+    setState(() {
+      _showLyrics = !_showLyrics;
+    });
+  }
+
+  void _handleSwipe(DragEndDetails details) {
+    if (details.primaryVelocity! < 0 && !_showLyrics) { // Swipe left
+      _pageAnimationController.forward();
+      setState(() {
+        _showLyrics = true;
+      });
+    } else if (details.primaryVelocity! > 0 && _showLyrics) { // Swipe right
+      _pageAnimationController.reverse();
+      setState(() {
+        _showLyrics = false;
+      });
+    }
   }
 
   Future<void> _initPlayer() async {
@@ -91,11 +136,11 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
         size: const Size(200, 200),
       );
 
-      print('Generated palette: ${paletteGenerator?.vibrantColor?.color}');
+      // print('Generated palette: ${paletteGenerator?.vibrantColor?.color}');
 
       setState(() {});
     } catch (e) {
-      print('Lỗi tạo palette: $e');
+      // print('Lỗi tạo palette: $e');
     }
   }
   Color getSafeBackgroundColor(PaletteGenerator? palette, Color fallback) {
@@ -181,11 +226,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
 
   Widget _buildAlbumArtView() {
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _showLyrics = true;
-        });
-      },
+      onHorizontalDragEnd: _handleSwipe,
       child: Center(
         child: Hero(
           tag: 'album_art_${widget.song.id}',
@@ -197,7 +238,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               boxShadow: [
                 BoxShadow(
                   color: paletteGenerator?.dominantColor?.color ??
-            paletteGenerator?.dominantColor?.color ?? defaultColor,
+                      paletteGenerator?.dominantColor?.color ?? defaultColor,
                   blurRadius: 40,
                   spreadRadius: 8,
                 ),
@@ -228,19 +269,36 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   Widget _buildSongInfo() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            widget.song.title,
-            style: const TextStyle(
-                fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
-            textAlign: TextAlign.center,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.song.title,
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                  textAlign: TextAlign.left,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.song.artist,
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  textAlign: TextAlign.left,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            widget.song.artist,
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
-            textAlign: TextAlign.center,
+          IconButton(
+            icon: const Icon(Icons.favorite_border, color: Colors.white),
+            onPressed: () {
+              // TODO: Xử lý khi nhấn yêu thích
+            },
           ),
         ],
       ),
@@ -258,11 +316,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     }
 
     return GestureDetector(
-      onTap: () {
-        setState(() {
-          _showLyrics = false;
-        });
-      },
+      onHorizontalDragEnd: _handleSwipe,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         itemCount: _lyrics!.lines.length,
@@ -400,41 +454,53 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   Widget _buildAdditionalControls() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    return Column(
       children: [
-        IconButton(
-          icon: Icon(
-            Icons.shuffle,
-            color: _isShuffled ? Theme.of(context).colorScheme.primary : null,
-          ),
-          onPressed: () {
-            setState(() {
-              _isShuffled = !_isShuffled;
-              widget.onShuffle(_isShuffled);
-            });
-          },
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            IconButton(
+              icon: Icon(
+                Icons.shuffle,
+                color: _isShuffled ? Theme.of(context).colorScheme.primary : Colors.white,
+              ),
+              onPressed: () {
+                setState(() {
+                  _isShuffled = !_isShuffled;
+                  widget.onShuffle(_isShuffled);
+                });
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                _getRepeatIcon(),
+                color: _loopMode != LoopMode.off
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.white,
+              ),
+              onPressed: () {
+                setState(() {
+                  _loopMode = _getNextLoopMode();
+                  widget.onRepeat(_loopMode);
+                });
+              },
+            ),
+            IconButton(
+              icon: Icon(
+                _showLyrics ? Icons.album : Icons.lyrics,
+                color: Colors.white,
+              ),
+              onPressed: _toggleView,
+            ),
+            IconButton(
+              icon: const Icon(Icons.playlist_play, color: Colors.white),
+              onPressed: () {
+                // TODO: Implement playlist view
+              },
+            ),
+          ],
         ),
-        IconButton(
-          icon: Icon(
-            _getRepeatIcon(),
-            color: _loopMode != LoopMode.off
-                ? Theme.of(context).colorScheme.primary
-                : null,
-          ),
-          onPressed: () {
-            setState(() {
-              _loopMode = _getNextLoopMode();
-              widget.onRepeat(_loopMode);
-            });
-          },
-        ),
-        IconButton(
-          icon: const Icon(Icons.playlist_play),
-          onPressed: () {
-            // TODO: Implement playlist view
-          },
-        ),
+
       ],
     );
   }
