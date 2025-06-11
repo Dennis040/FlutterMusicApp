@@ -107,16 +107,43 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   Future<void> _loadLyrics() async {
-    // For testing, use mock lyrics
-    final lyrics = LyricsService.getMockLyrics();
-    setState(() {
-      _lyrics = lyrics;
-    });
+    try {
+      debugPrint("Loading lyrics for song: ${widget.song.songName}");
+      debugPrint("LRC URL: ${widget.song.linkLrc}");
+      
+      if (widget.song.linkLrc == null || widget.song.linkLrc == "null") {
+        debugPrint("No LRC URL provided for this song");
+        setState(() {
+          _lyrics = Lyrics(lines: [], error: "No lyrics available for this song");
+        });
+        return;
+      }
+
+      final lyrics = await Lyrics.fromUrl(widget.song.linkLrc);
+      
+      if (lyrics.error != null) {
+        debugPrint("Error loading lyrics: ${lyrics.error}");
+      } else {
+        debugPrint("Successfully loaded ${lyrics.lines.length} lyric lines");
+        if (lyrics.lines.isEmpty) {
+          debugPrint("Warning: No lyric lines found in the LRC file");
+        }
+      }
+      
+      setState(() {
+        _lyrics = lyrics;
+      });
+    } catch (e) {
+      debugPrint("Error in _loadLyrics: $e");
+      setState(() {
+        _lyrics = Lyrics(lines: [], error: "Failed to load lyrics: $e");
+      });
+    }
   }
 
   Future<void> _generateColors() async {
     try {
-      final imageProvider = NetworkImage(widget.song.image);
+      final imageProvider = NetworkImage(widget.song.songImage);
       final Completer<Size> completer = Completer<Size>();
 
       final imageStream = imageProvider.resolve(const ImageConfiguration());
@@ -161,7 +188,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
 }
 
   void _updateCurrentLyric(Duration position) {
-    if (_lyrics == null) return;
+    if (_lyrics == null || _lyrics!.lines.isEmpty) return;
 
     for (int i = 0; i < _lyrics!.lines.length; i++) {
       if (i == _lyrics!.lines.length - 1 ||
@@ -195,7 +222,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            widget.song.title,
+            widget.song.songName,
             style: TextStyle(
                 color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
           ),
@@ -229,7 +256,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
       onHorizontalDragEnd: _handleSwipe,
       child: Center(
         child: Hero(
-          tag: 'album_art_${widget.song.id}',
+          tag: 'album_art_${widget.song.songId}',
           child: Container(
             width: MediaQuery.of(context).size.width * 0.7,
             height: MediaQuery.of(context).size.width * 0.7,
@@ -248,7 +275,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               turns: _imageAnimationController,
               child: ClipOval(
                 child: Image.network(
-                  widget.song.image,
+                  widget.song.songImage,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
@@ -269,7 +296,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   Widget _buildSongInfo() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24),
-      child: Row(
+      child: Row( 
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -278,7 +305,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.song.title,
+                  widget.song.songName,
                   style: const TextStyle(
                       fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
                   textAlign: TextAlign.left,
@@ -286,7 +313,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  widget.song.artist,
+                  widget.song.artistName,
                   style: const TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.left,
                   overflow: TextOverflow.ellipsis,
@@ -308,9 +335,26 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   Widget _buildLyricsView() {
     if (_lyrics == null) {
       return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    if (_lyrics!.error != null) {
+      return Center(
         child: Text(
-          'No lyrics available',
+          _lyrics!.error!,
+          style: const TextStyle(color: Colors.grey),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    if (_lyrics!.lines.isEmpty) {
+      return const Center(
+        child: Text(
+          'No lyrics available for this song',
           style: TextStyle(color: Colors.grey),
+          textAlign: TextAlign.center,
         ),
       );
     }
@@ -332,8 +376,11 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 fontSize: isCurrentLine ? 20 : 16,
                 color: isCurrentLine ? Colors.white : Colors.grey,
                 fontWeight: isCurrentLine ? FontWeight.bold : FontWeight.normal,
+                fontFamily: 'Roboto',
               ),
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           );
         },

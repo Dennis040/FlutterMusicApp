@@ -16,18 +16,4 @@ class LyricsService {
     }
     return null;
   }
-
-  // Mock lyrics for testing
-  static Lyrics getMockLyrics() {
-    return Lyrics(
-      lines: [
-        LyricLine(timestamp: Duration(seconds: 0), text: "Verse 1"),
-        LyricLine(timestamp: Duration(seconds: 5), text: "This is a test lyric line"),
-        LyricLine(timestamp: Duration(seconds: 10), text: "Another test lyric line"),
-        LyricLine(timestamp: Duration(seconds: 15), text: "Chorus"),
-        LyricLine(timestamp: Duration(seconds: 20), text: "This is the chorus"),
-        LyricLine(timestamp: Duration(seconds: 25), text: "End of chorus"),
-      ],
-    );
-  }
 } 

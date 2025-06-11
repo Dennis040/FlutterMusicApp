@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../constants/app_colors.dart';
 import '../../model/song.dart';
-import '../../music/service/song_service.dart';
 import '../../music/play_music/playing_music.dart';
 import '../../music/play_music/audio_player_manager.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class LibraryTab extends StatefulWidget {
   const LibraryTab({super.key});
@@ -24,7 +25,26 @@ class _LibraryTabState extends State<LibraryTab> {
   @override
   void initState() {
     super.initState();
-    _loadSongs();
+    debugPrint("LibraryTab: Initializing...");
+    fetchSongs()
+        .then((data) {
+          debugPrint("LibraryTab: Fetch successful");
+          setState(() {
+            _songs = data;
+            _isLoading = false;
+            debugPrint("LibraryTab: Songs loaded successfully: ${data.length} songs");
+            if (data.isNotEmpty) {
+              debugPrint("LibraryTab: First song: ${data[0].songName} by ${data[0].artistName}");
+            }
+          });
+        })
+        .catchError((e) {
+          debugPrint("LibraryTab: Error occurred while fetching songs");
+          setState(() {
+            _isLoading = false;
+            debugPrint("LibraryTab: Error details: $e");
+          });
+        });
   }
 
   void _playSong(Song song) {
@@ -35,7 +55,7 @@ class _LibraryTabState extends State<LibraryTab> {
             (context) => PlayingMusicInterface(
               song: song,
               audioPlayerManager: AudioPlayerManager(
-                songUrl: song.source,
+                songUrl: song.linkSong,
               ), // Dummy nếu chưa cần phát nhạc
               onNext: () {},
               onPrevious: () {},
@@ -46,16 +66,54 @@ class _LibraryTabState extends State<LibraryTab> {
     );
   }
 
-  Future<void> _loadSongs() async {
-    final songs = await SongService.loadData();
-    setState(() {
-      _songs = songs;
-      _isLoading = false;
-    });
+  // Future<void> _loadSongs() async {
+  //   final songs = await SongService.loadData();
+  //   setState(() {
+  //     _songs = songs;
+  //     _isLoading = false;
+  //   });
+  // }
+
+  Future<List<Song>> fetchSongs() async {
+    debugPrint("LibraryTab: Starting API call...");
+    try {
+      final response = await http.get(
+        Uri.parse('http://10.0.2.2:5207/api/Songs'),
+      );
+
+      debugPrint("LibraryTab: API Response Status: ${response.statusCode}");
+      debugPrint("LibraryTab: API Response Body length: ${response.body.length}");
+
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        debugPrint("LibraryTab: Parsed ${data.length} songs from API");
+        
+        final songs = data.map((json) {
+          try {
+            final song = Song.fromJson(json);
+            debugPrint("LibraryTab: Successfully parsed song: ${song.songName}");
+            return song;
+          } catch (e) {
+            debugPrint("LibraryTab: Error parsing song: $e");
+            debugPrint("LibraryTab: Problematic JSON: $json");
+            rethrow;
+          }
+        }).toList();
+        
+        debugPrint("LibraryTab: Total songs parsed: ${songs.length}");
+        return songs;
+      } else {
+        throw Exception('Failed to load songs: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint("LibraryTab: Error in fetchSongs: $e");
+      throw Exception('Failed to load songs: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("LibraryTab: Building widget, isLoading: $_isLoading, songs count: ${_songs?.length ?? 0}");
     return CustomScrollView(
       slivers: [
         SliverAppBar(
@@ -270,24 +328,24 @@ class _LibraryTabState extends State<LibraryTab> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(4),
                     image: DecorationImage(
-                      image: NetworkImage(song.image),
+                      image: NetworkImage(song.songImage),
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
                 title: Text(
-                  song.title,
+                  song.songName,
                   style: const TextStyle(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 subtitle: Text(
-                  song.artist,
+                  song.artistName,
                   style: const TextStyle(color: AppColors.textSecondary),
                 ),
               );
-            }, childCount: _songs?.length),
+            }, childCount: _songs?.length ?? 0  ),
           ),
       ],
     );
