@@ -5,7 +5,7 @@ import '../../model/lyrics.dart';
 class LyricsService {
   static Future<Lyrics?> fetchLyrics(String? lyricsUrl) async {
     if (lyricsUrl == null) return null;
-    
+
     try {
       final response = await http.get(Uri.parse(lyricsUrl));
       if (response.statusCode == 200) {
@@ -16,4 +16,4 @@ class LyricsService {
     }
     return null;
   }
-} 
+}

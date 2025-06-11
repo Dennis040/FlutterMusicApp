@@ -10,13 +10,13 @@ class Song {
   // final int counter;
   // final int replay;
   // final String? lyricsUrl; // URL to fetch lyrics
-    final int songId;
-    final String songName;
-    final String songImage;
-    final String linkSong;
-    final String? linkLrc;
-    final int views;
-    final String artistName;
+  final int songId;
+  final String songName;
+  final String songImage;
+  final String linkSong;
+  final String? linkLrc;
+  final int views;
+  final String artistName;
 
   // bool favorite;
   // int counter;

@@ -39,14 +39,15 @@ class AudioPlayerManager {
     );
 
     try {
-        _logger.info('Loading song: $songUrl');
-        await player.setUrl(songUrl);
-        _logger.info('Song loaded successfully!');
-      } catch (e, stackTrace) {
-        _logger.severe('Error loading song', e, stackTrace);
+      _logger.info('Loading song: $songUrl');
+      await player.setUrl(songUrl);
+      _logger.info('Song loaded successfully!');
+    } catch (e, stackTrace) {
+      _logger.severe('Error loading song', e, stackTrace);
     }
   }
-   void dispose() {
+
+  void dispose() {
     player.dispose();
     _logger.info('AudioPlayer disposed');
   }

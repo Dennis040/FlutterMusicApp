@@ -4,6 +4,9 @@ import 'tabs/home_tab.dart';
 import 'tabs/search_tab.dart';
 import 'tabs/library_tab.dart';
 import 'tabs/profile_tab.dart';
+import '../drawer/favorite_songs_screen.dart';
+import '../drawer/history_screen.dart';
+import '../drawer/downloaded_songs_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -77,6 +80,91 @@ class _HomeScreenState extends State<HomeScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Drawer(
+        child: Container(
+          color: AppColors.primaryDark,
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              DrawerHeader(
+                decoration: const BoxDecoration(
+                  color: Color.fromARGB(255, 42, 16, 16),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.music_note, size: 50, color: Colors.white),
+                    SizedBox(height: 10),
+                    Text(
+                      'Music App',
+                      style: TextStyle(color: Colors.white, fontSize: 24),
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.home, color: Colors.white),
+                title: const Text(
+                  'Trang chủ',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _onTabTapped(0);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.favorite, color: Colors.white),
+                title: const Text(
+                  'Bài hát yêu thích',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const FavoriteSongsScreen(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.history, color: Colors.white),
+                title: const Text(
+                  'Lịch sử',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HistoryScreen(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.download, color: Colors.white),
+                title: const Text(
+                  'Bài hát đã tải',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DownloadedSongsScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {

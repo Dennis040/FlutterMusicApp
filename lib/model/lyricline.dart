@@ -12,34 +12,31 @@ class LyricLine {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'timestamp': timestamp.inMilliseconds,
-      'text': text,
-    };
+    return {'timestamp': timestamp.inMilliseconds, 'text': text};
   }
 
   static List<LyricLine> parseLrc(String lrcContent) {
     final List<LyricLine> lyrics = [];
     final lines = lrcContent.split('\n');
-    
+
     for (var line in lines) {
       if (line.trim().isEmpty) continue;
-      
+
       // Parse timestamp [mm:ss.xx]
       final timeRegex = RegExp(r'\[(\d{2}):(\d{2})\.(\d{2,3})\]');
       final match = timeRegex.firstMatch(line);
-      
+
       if (match != null) {
         final minutes = int.parse(match.group(1)!);
         final seconds = int.parse(match.group(2)!);
         final milliseconds = int.parse(match.group(3)!.padRight(3, '0'));
-        
+
         final timestamp = Duration(
           minutes: minutes,
           seconds: seconds,
           milliseconds: milliseconds,
         );
-        
+
         // Get the text after the timestamp
         final text = line.substring(match.end).trim();
         if (text.isNotEmpty) {
@@ -47,9 +44,9 @@ class LyricLine {
         }
       }
     }
-    
+
     // Sort lyrics by timestamp
     lyrics.sort((a, b) => a.timestamp.compareTo(b.timestamp));
     return lyrics;
   }
-} 
+}

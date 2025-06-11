@@ -86,12 +86,14 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   void _handleSwipe(DragEndDetails details) {
-    if (details.primaryVelocity! < 0 && !_showLyrics) { // Swipe left
+    if (details.primaryVelocity! < 0 && !_showLyrics) {
+      // Swipe left
       _pageAnimationController.forward();
       setState(() {
         _showLyrics = true;
       });
-    } else if (details.primaryVelocity! > 0 && _showLyrics) { // Swipe right
+    } else if (details.primaryVelocity! > 0 && _showLyrics) {
+      // Swipe right
       _pageAnimationController.reverse();
       setState(() {
         _showLyrics = false;
@@ -110,17 +112,20 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     try {
       debugPrint("Loading lyrics for song: ${widget.song.songName}");
       debugPrint("LRC URL: ${widget.song.linkLrc}");
-      
+
       if (widget.song.linkLrc == null || widget.song.linkLrc == "null") {
         debugPrint("No LRC URL provided for this song");
         setState(() {
-          _lyrics = Lyrics(lines: [], error: "No lyrics available for this song");
+          _lyrics = Lyrics(
+            lines: [],
+            error: "No lyrics available for this song",
+          );
         });
         return;
       }
 
       final lyrics = await Lyrics.fromUrl(widget.song.linkLrc);
-      
+
       if (lyrics.error != null) {
         debugPrint("Error loading lyrics: ${lyrics.error}");
       } else {
@@ -129,7 +134,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
           debugPrint("Warning: No lyric lines found in the LRC file");
         }
       }
-      
+
       setState(() {
         _lyrics = lyrics;
       });
@@ -148,10 +153,9 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
 
       final imageStream = imageProvider.resolve(const ImageConfiguration());
       final listener = ImageStreamListener((ImageInfo info, bool _) {
-        completer.complete(Size(
-          info.image.width.toDouble(),
-          info.image.height.toDouble(),
-        ));
+        completer.complete(
+          Size(info.image.width.toDouble(), info.image.height.toDouble()),
+        );
       });
 
       imageStream.addListener(listener);
@@ -170,22 +174,23 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
       // print('Lỗi tạo palette: $e');
     }
   }
+
   Color getSafeBackgroundColor(PaletteGenerator? palette, Color fallback) {
-  final List<Color?> candidates = [
-    palette?.darkVibrantColor?.color,
-    palette?.vibrantColor?.color,
-    palette?.dominantColor?.color,
-    palette?.lightMutedColor?.color,
-  ];
+    final List<Color?> candidates = [
+      palette?.darkVibrantColor?.color,
+      palette?.vibrantColor?.color,
+      palette?.dominantColor?.color,
+      palette?.lightMutedColor?.color,
+    ];
 
-  for (final color in candidates) {
-    if (color != null && color.computeLuminance() < 0.8) {
-      return color;
+    for (final color in candidates) {
+      if (color != null && color.computeLuminance() < 0.8) {
+        return color;
+      }
     }
-  }
 
-  return fallback; // fallback là màu đen hoặc màu mặc định bạn chọn
-}
+    return fallback; // fallback là màu đen hoặc màu mặc định bạn chọn
+  }
 
   void _updateCurrentLyric(Duration position) {
     if (_lyrics == null || _lyrics!.lines.isEmpty) return;
@@ -209,9 +214,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     Color bgColor = getSafeBackgroundColor(paletteGenerator, defaultColor);
 
     return Container(
-      decoration: BoxDecoration(
-        color: bgColor
-      ),
+      decoration: BoxDecoration(color: bgColor),
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppBar(
@@ -224,7 +227,10 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
           title: Text(
             widget.song.songName,
             style: TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
           ),
           centerTitle: true,
           actions: [
@@ -264,8 +270,10 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: paletteGenerator?.dominantColor?.color ??
-                      paletteGenerator?.dominantColor?.color ?? defaultColor,
+                  color:
+                      paletteGenerator?.dominantColor?.color ??
+                      paletteGenerator?.dominantColor?.color ??
+                      defaultColor,
                   blurRadius: 40,
                   spreadRadius: 8,
                 ),
@@ -280,8 +288,11 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
                       color: Colors.grey[800],
-                      child: const Icon(Icons.music_note,
-                          size: 64, color: Colors.white),
+                      child: const Icon(
+                        Icons.music_note,
+                        size: 64,
+                        color: Colors.white,
+                      ),
                     );
                   },
                 ),
@@ -296,7 +307,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   Widget _buildSongInfo() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24),
-      child: Row( 
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -307,7 +318,10 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 Text(
                   widget.song.songName,
                   style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                   textAlign: TextAlign.left,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -334,9 +348,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
 
   Widget _buildLyricsView() {
     if (_lyrics == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_lyrics!.error != null) {
@@ -402,22 +414,26 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 SliderTheme(
                   data: SliderThemeData(
                     trackHeight: 4,
-                    thumbShape:
-                        const RoundSliderThumbShape(enabledThumbRadius: 8),
-                    overlayShape:
-                        const RoundSliderOverlayShape(overlayRadius: 16),
+                    thumbShape: const RoundSliderThumbShape(
+                      enabledThumbRadius: 8,
+                    ),
+                    overlayShape: const RoundSliderOverlayShape(
+                      overlayRadius: 16,
+                    ),
                     activeTrackColor: Colors.white,
                     inactiveTrackColor: Colors.white24,
                     thumbColor: Colors.white,
                     overlayColor: Colors.white24,
                   ),
                   child: Slider(
-                    value: position.inMilliseconds
-                        .toDouble()
-                        .clamp(0, duration.inMilliseconds.toDouble()),
-                    max: duration.inMilliseconds.toDouble() > 0
-                        ? duration.inMilliseconds.toDouble()
-                        : 1,
+                    value: position.inMilliseconds.toDouble().clamp(
+                      0,
+                      duration.inMilliseconds.toDouble(),
+                    ),
+                    max:
+                        duration.inMilliseconds.toDouble() > 0
+                            ? duration.inMilliseconds.toDouble()
+                            : 1,
                     onChanged: (value) {
                       widget.audioPlayerManager.player.seek(
                         Duration(milliseconds: value.toInt()),
@@ -433,12 +449,16 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                       Text(
                         '${position.inMinutes}:${(position.inSeconds % 60).toString().padLeft(2, '0')}',
                         style: const TextStyle(
-                            color: Colors.white70, fontSize: 12),
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
                       ),
                       Text(
                         '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}',
                         style: const TextStyle(
-                            color: Colors.white70, fontSize: 12),
+                          color: Colors.white70,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
@@ -509,7 +529,10 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             IconButton(
               icon: Icon(
                 Icons.shuffle,
-                color: _isShuffled ? Theme.of(context).colorScheme.primary : Colors.white,
+                color:
+                    _isShuffled
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.white,
               ),
               onPressed: () {
                 setState(() {
@@ -521,9 +544,10 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             IconButton(
               icon: Icon(
                 _getRepeatIcon(),
-                color: _loopMode != LoopMode.off
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.white,
+                color:
+                    _loopMode != LoopMode.off
+                        ? Theme.of(context).colorScheme.primary
+                        : Colors.white,
               ),
               onPressed: () {
                 setState(() {
@@ -547,7 +571,6 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             ),
           ],
         ),
-
       ],
     );
   }

@@ -32,9 +32,13 @@ class _LibraryTabState extends State<LibraryTab> {
           setState(() {
             _songs = data;
             _isLoading = false;
-            debugPrint("LibraryTab: Songs loaded successfully: ${data.length} songs");
+            debugPrint(
+              "LibraryTab: Songs loaded successfully: ${data.length} songs",
+            );
             if (data.isNotEmpty) {
-              debugPrint("LibraryTab: First song: ${data[0].songName} by ${data[0].artistName}");
+              debugPrint(
+                "LibraryTab: First song: ${data[0].songName} by ${data[0].artistName}",
+              );
             }
           });
         })
@@ -79,27 +83,33 @@ class _LibraryTabState extends State<LibraryTab> {
     try {
       final response = await http.get(
         Uri.parse('http://10.0.2.2:5207/api/Songs'),
+        //Uri.parse('http://192.168.29.101:5207/api/Songs'),
       );
 
       debugPrint("LibraryTab: API Response Status: ${response.statusCode}");
-      debugPrint("LibraryTab: API Response Body length: ${response.body.length}");
+      debugPrint(
+        "LibraryTab: API Response Body length: ${response.body.length}",
+      );
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         debugPrint("LibraryTab: Parsed ${data.length} songs from API");
-        
-        final songs = data.map((json) {
-          try {
-            final song = Song.fromJson(json);
-            debugPrint("LibraryTab: Successfully parsed song: ${song.songName}");
-            return song;
-          } catch (e) {
-            debugPrint("LibraryTab: Error parsing song: $e");
-            debugPrint("LibraryTab: Problematic JSON: $json");
-            rethrow;
-          }
-        }).toList();
-        
+
+        final songs =
+            data.map((json) {
+              try {
+                final song = Song.fromJson(json);
+                debugPrint(
+                  "LibraryTab: Successfully parsed song: ${song.songName}",
+                );
+                return song;
+              } catch (e) {
+                debugPrint("LibraryTab: Error parsing song: $e");
+                debugPrint("LibraryTab: Problematic JSON: $json");
+                rethrow;
+              }
+            }).toList();
+
         debugPrint("LibraryTab: Total songs parsed: ${songs.length}");
         return songs;
       } else {
@@ -113,7 +123,9 @@ class _LibraryTabState extends State<LibraryTab> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("LibraryTab: Building widget, isLoading: $_isLoading, songs count: ${_songs?.length ?? 0}");
+    debugPrint(
+      "LibraryTab: Building widget, isLoading: $_isLoading, songs count: ${_songs?.length ?? 0}",
+    );
     return CustomScrollView(
       slivers: [
         SliverAppBar(
@@ -345,7 +357,7 @@ class _LibraryTabState extends State<LibraryTab> {
                   style: const TextStyle(color: AppColors.textSecondary),
                 ),
               );
-            }, childCount: _songs?.length ?? 0  ),
+            }, childCount: _songs?.length ?? 0),
           ),
       ],
     );

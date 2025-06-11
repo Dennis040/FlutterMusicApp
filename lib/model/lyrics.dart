@@ -17,9 +17,7 @@ class Lyrics {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'lines': lines.map((line) => line.toJson()).toList(),
-    };
+    return {'lines': lines.map((line) => line.toJson()).toList()};
   }
 
   static Future<Lyrics> fromUrl(String? url) async {
@@ -30,18 +28,21 @@ class Lyrics {
     try {
       debugPrint("Loading LRC from URL: $url");
       final response = await http.get(Uri.parse(url));
-      
+
       if (response.statusCode == 200) {
         // Convert response body to UTF-8
         final String decodedBody = utf8.decode(response.bodyBytes);
         debugPrint("LRC content: $decodedBody");
-        
+
         final lyrics = LyricLine.parseLrc(decodedBody);
         debugPrint("Parsed ${lyrics.length} lyric lines");
         return Lyrics(lines: lyrics);
       } else {
         debugPrint("Failed to load LRC: ${response.statusCode}");
-        return Lyrics(lines: [], error: "Failed to load lyrics: ${response.statusCode}");
+        return Lyrics(
+          lines: [],
+          error: "Failed to load lyrics: ${response.statusCode}",
+        );
       }
     } catch (e) {
       debugPrint("Error loading LRC: $e");
@@ -51,7 +52,7 @@ class Lyrics {
 
   String? getCurrentLyric(Duration currentPosition) {
     if (lines.isEmpty) return null;
-    
+
     // Find the last lyric line that is before or at the current position
     for (int i = lines.length - 1; i >= 0; i--) {
       if (lines[i].timestamp <= currentPosition) {
