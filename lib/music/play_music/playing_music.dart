@@ -43,6 +43,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   PaletteGenerator? paletteGenerator;
   Color defaultColor = Colors.black;
   double _volume = 1.0;
+  final ScrollController _lyricsScrollController = ScrollController();
 
   @override
   void initState() {
@@ -70,6 +71,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
 
   @override
   void dispose() {
+    _lyricsScrollController.dispose();
     _pageAnimationController.dispose();
     super.dispose();
   }
@@ -203,10 +205,34 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
           setState(() {
             _currentLyricIndex = i;
           });
+          _scrollToCurrentLyric();
         }
         break;
       }
     }
+  }
+
+  void _scrollToCurrentLyric() {
+    if (!_showLyrics || _lyrics == null || _lyrics!.lines.isEmpty) return;
+
+    final itemHeight = 60.0; // Chiều cao của mỗi dòng lời bài hát
+    final screenHeight = MediaQuery.of(context).size.height;
+    final viewportHeight = screenHeight * 0.6; // Chiều cao vùng hiển thị lời bài hát
+
+    // Tính toán vị trí cần cuộn đến
+    final targetPosition = _currentLyricIndex * itemHeight - (viewportHeight / 2) + itemHeight;
+
+    // Đảm bảo không cuộn quá giới hạn
+    final maxScroll = _lyricsScrollController.position.maxScrollExtent;
+    final minScroll = 0.0;
+    final clampedPosition = targetPosition.clamp(minScroll, maxScroll);
+
+    // Cuộn đến vị trí mới
+    _lyricsScrollController.animateTo(
+      clampedPosition,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -374,25 +400,40 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     return GestureDetector(
       onHorizontalDragEnd: _handleSwipe,
       child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        controller: _lyricsScrollController,
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: MediaQuery.of(context).size.height * 0.2,
+          bottom: MediaQuery.of(context).size.height * 0.2,
+        ),
         itemCount: _lyrics!.lines.length,
         itemBuilder: (context, index) {
           final line = _lyrics!.lines[index];
           final isCurrentLine = index == _currentLyricIndex;
+          final isNextLine = index == _currentLyricIndex + 1;
+          final isPreviousLine = index == _currentLyricIndex - 1;
 
-          return Padding(
+          return Container(
+            height: 60, // Chiều cao cố định cho mỗi dòng
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(
-              line.text,
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 200),
               style: TextStyle(
-                fontSize: isCurrentLine ? 20 : 16,
-                color: isCurrentLine ? Colors.white : Colors.grey,
+                fontSize: isCurrentLine ? 24 : (isNextLine || isPreviousLine ? 18 : 16),
+                color: isCurrentLine 
+                    ? Colors.white 
+                    : (isNextLine || isPreviousLine ? Colors.white70 : Colors.grey),
                 fontWeight: isCurrentLine ? FontWeight.bold : FontWeight.normal,
                 fontFamily: 'Roboto',
+                height: 1.5,
               ),
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              child: Text(
+                line.text,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           );
         },
