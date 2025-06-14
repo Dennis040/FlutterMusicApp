@@ -7,7 +7,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home_screen.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -19,6 +19,8 @@ void main() {
       statusBarIconBrightness: Brightness.light,
     ),
   );
+  
+  
   runApp(const MyApp());
 }
 

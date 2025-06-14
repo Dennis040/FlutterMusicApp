@@ -55,17 +55,16 @@ class _LibraryTabState extends State<LibraryTab> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => PlayingMusicInterface(
-              song: song,
-              audioPlayerManager: AudioPlayerManager(
-                songUrl: song.linkSong,
-              ), // Dummy nếu chưa cần phát nhạc
-              onNext: () {},
-              onPrevious: () {},
-              onShuffle: (isShuffled) {},
-              onRepeat: (loopMode) {},
-            ),
+        builder: (context) => PlayingMusicInterface(
+          song: song,
+          audioPlayerManager: AudioPlayerManager(
+            songUrl: song.linkSong,
+          ),
+          onNext: () {},
+          onPrevious: () {},
+          onShuffle: (isShuffled) {},
+          onRepeat: (loopMode) {},
+        ),
       ),
     );
   }

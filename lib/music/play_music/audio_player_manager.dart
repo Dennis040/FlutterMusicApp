@@ -3,30 +3,15 @@ import 'package:rxdart/rxdart.dart';
 import 'package:logging/logging.dart';
 
 class AudioPlayerManager {
-  // AudioPlayerManager({
-  //   required this.songUrl,
-  // });
   AudioPlayerManager({required this.songUrl}) {
     _initLogger();
   }
-  // final player = AudioPlayer();
-  // Stream<DurationState>? durationState;
-  // String songUrl;
+
   final AudioPlayer player = AudioPlayer();
   late final Stream<DurationState> durationState;
   final String songUrl;
   final Logger _logger = Logger('AudioPlayerManager');
 
-  // void init() {
-  //   durationState = Rx.combineLatest2<Duration, PlaybackEvent, DurationState>(
-  //       player.positionStream,
-  //       player.playbackEventStream,
-  //       (position, playbackEvent) => DurationState(
-  //           progess: position,
-  //           buffered: playbackEvent.bufferedPosition,
-  //           total: playbackEvent.duration));
-  //   player.setUrl(songUrl);
-  // }
   Future<void> init() async {
     durationState = Rx.combineLatest2<Duration, PlaybackEvent, DurationState>(
       player.positionStream,
@@ -56,7 +41,6 @@ class AudioPlayerManager {
     Logger.root.level = Level.ALL;
     Logger.root.onRecord.listen((record) {
       // In ra console
-      print('${record.level.name}: ${record.time}: ${record.message}');
     });
   }
 }

@@ -3,7 +3,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:palette_generator/palette_generator.dart';
 import '../../model/song.dart';
 import '../../model/lyrics.dart';
-import '../service/lyrics_service.dart';
+// import '../service/lyrics_service.dart';
 import 'audio_player_manager.dart';
 import 'dart:async';
 
@@ -402,10 +402,10 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
       child: ListView.builder(
         controller: _lyricsScrollController,
         padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: MediaQuery.of(context).size.height * 0.2,
-          bottom: MediaQuery.of(context).size.height * 0.2,
+          left: 12,
+          right: 12,
+          top: 0,
+          bottom: 0,
         ),
         itemCount: _lyrics!.lines.length,
         itemBuilder: (context, index) {
@@ -420,7 +420,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             child: AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
-                fontSize: isCurrentLine ? 24 : (isNextLine || isPreviousLine ? 18 : 16),
+                fontSize: isCurrentLine ? 20 : (isNextLine || isPreviousLine ? 18 : 16),
                 color: isCurrentLine 
                     ? Colors.white 
                     : (isNextLine || isPreviousLine ? Colors.white70 : Colors.grey),
@@ -432,7 +432,8 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 line.text,
                 textAlign: TextAlign.center,
                 maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+                overflow: TextOverflow.visible,
+                softWrap: true,
               ),
             ),
           );
@@ -537,6 +538,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                     iconSize: 64,
                     onPressed: () {
                       widget.audioPlayerManager.player.play();
+                      // MusicPlayerManager.resumeMusic();
                     },
                   );
                 } else {
@@ -545,6 +547,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                     iconSize: 64,
                     onPressed: () {
                       widget.audioPlayerManager.player.pause();
+                      // MusicPlayerManager.pauseMusic();
                     },
                   );
                 }
