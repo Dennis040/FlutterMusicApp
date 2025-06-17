@@ -39,10 +39,10 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   bool _showLyrics = false;
   late AnimationController _imageAnimationController;
   late AnimationController _pageAnimationController;
-  late Animation<double> _pageAnimation;
+  late Animation<double> pageAnimation;
   PaletteGenerator? paletteGenerator;
   Color defaultColor = Colors.black;
-  double _volume = 1.0;
+  double volume = 1.0;
   final ScrollController _lyricsScrollController = ScrollController();
 
   @override
@@ -58,7 +58,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
       duration: const Duration(milliseconds: 300),
     );
 
-    _pageAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    pageAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _pageAnimationController,
         curve: Curves.easeInOut,
