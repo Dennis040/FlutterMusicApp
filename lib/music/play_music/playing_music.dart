@@ -6,6 +6,7 @@ import '../../model/lyrics.dart';
 // import '../service/lyrics_service.dart';
 import 'audio_player_manager.dart';
 import 'dart:async';
+import '../service/notifications_service.dart';
 
 class PlayingMusicInterface extends StatefulWidget {
   const PlayingMusicInterface({
@@ -64,7 +65,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
         curve: Curves.easeInOut,
       ),
     );
-
+    showMusicNotification(widget.song.artistName, widget.song.songName);
     _initPlayer();
     _generateColors();
   }
