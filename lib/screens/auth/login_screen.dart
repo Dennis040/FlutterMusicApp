@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,6 +23,46 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> loginUser() async {
+    final url = Uri.parse(
+      'http://10.0.2.2:5207/api/Users/login',
+    ); // dùng 10.0.2.2 nếu là Android Emulator
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': _emailController.text,
+        'password': _passwordController.text,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // Parse accessToken từ response body
+      final data = jsonDecode(response.body);
+      final token = data['accessToken'];
+      debugPrint("Response body: ${response.body}");
+      // Lưu token vào shared_preferences
+      // final prefs = await SharedPreferences.getInstance();
+      // await prefs.setString('accessToken', token);
+
+      // Thành công
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đăng nhập thành công!')));
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      // Lỗi
+      final error = jsonDecode(response.body);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi: ${error['message'] ?? 'Đăng nhập thất bại'}'),
+        ),
+      );
+    }
   }
 
   @override
@@ -117,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         // TODO: Xử lý đăng nhập
-                        Navigator.pushReplacementNamed(context, '/home');
+                        loginUser();
                       }
                     },
                     style: ElevatedButton.styleFrom(

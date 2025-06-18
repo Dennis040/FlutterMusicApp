@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../constants/app_colors.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -25,6 +27,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
+  }
+
+  Future<void> registerUser() async {
+    final url = Uri.parse(
+      'http://10.0.2.2:5207/api/Users/register',
+    ); // dùng 10.0.2.2 nếu là Android Emulator
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'username': _nameController.text,
+        'email': _emailController.text,
+        'password': _passwordController.text,
+        'phone': '', // bạn có thể thêm input nếu muốn
+        'role': 'member',
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      // Thành công
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Đăng ký thành công!')));
+      Navigator.pop(context); // về lại màn login
+    } else {
+      // Lỗi
+      final error = jsonDecode(response.body);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi: ${error['message'] ?? 'Đăng ký thất bại'}'),
+        ),
+      );
+    }
   }
 
   @override
@@ -159,7 +196,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onPressed: () {
                       if (_formKey.currentState!.validate()) {
                         // TODO: Xử lý đăng ký
-                        Navigator.pushReplacementNamed(context, '/home');
+                        registerUser();
+                        // Navigator.pushReplacementNamed(context, '/home');
                       }
                     },
                     style: ElevatedButton.styleFrom(
