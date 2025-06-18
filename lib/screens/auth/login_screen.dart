@@ -44,8 +44,8 @@ class _LoginScreenState extends State<LoginScreen> {
       final token = data['accessToken'];
       debugPrint("Response body: ${response.body}");
       // Lưu token vào shared_preferences
-      // final prefs = await SharedPreferences.getInstance();
-      // await prefs.setString('accessToken', token);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('accessToken', token);
 
       // Thành công
       if (!mounted) return;
