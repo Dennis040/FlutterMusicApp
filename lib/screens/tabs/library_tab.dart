@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_music_app/model/artist.dart';
+import 'package:flutter_music_app/model/playlist_user.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
 import '../../model/song.dart';
 import '../../music/play_music/playing_music.dart';
 import '../../music/play_music/audio_player_manager.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../user/create_playlist_screen.dart';
 
 class LibraryTab extends StatefulWidget {
   const LibraryTab({super.key});
@@ -17,114 +22,80 @@ class _LibraryTabState extends State<LibraryTab> {
   int _selectedFilter = 0;
   // int _selectedIndex = 0;
   // final String _userName = "User";
-  List<Song>? _songs = [];
-  // Song? _currentlyPlayingSong;
-  // AudioPlayerManager? _audioPlayerManager;
+  List<Object> _items = []; // chứa cả Playlist và Artist
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     debugPrint("LibraryTab: Initializing...");
-    fetchSongs()
-        .then((data) {
-          debugPrint("LibraryTab: Fetch successful");
-          setState(() {
-            _songs = data;
-            _isLoading = false;
-            debugPrint(
-              "LibraryTab: Songs loaded successfully: ${data.length} songs",
-            );
-            if (data.isNotEmpty) {
-              debugPrint(
-                "LibraryTab: First song: ${data[0].songName} by ${data[0].artistName}",
-              );
-            }
-          });
-        })
-        .catchError((e) {
-          debugPrint("LibraryTab: Error occurred while fetching songs");
-          setState(() {
-            _isLoading = false;
-            debugPrint("LibraryTab: Error details: $e");
-          });
-        });
+    fetchUserLibrary();
   }
 
   void _playSong(Song song) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PlayingMusicInterface(
-          song: song,
-          audioPlayerManager: AudioPlayerManager(
-            songUrl: song.linkSong,
-          ),
-          onNext: () {},
-          onPrevious: () {},
-          onShuffle: (isShuffled) {},
-          onRepeat: (loopMode) {},
-        ),
+        builder:
+            (context) => PlayingMusicInterface(
+              song: song,
+              audioPlayerManager: AudioPlayerManager(songUrl: song.linkSong),
+              onNext: () {},
+              onPrevious: () {},
+              onShuffle: (isShuffled) {},
+              onRepeat: (loopMode) {},
+            ),
       ),
     );
   }
 
-  // Future<void> _loadSongs() async {
-  //   final songs = await SongService.loadData();
-  //   setState(() {
-  //     _songs = songs;
-  //     _isLoading = false;
-  //   });
-  // }
+  Future<int?> getUserIdFromToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('accessToken');
 
-  Future<List<Song>> fetchSongs() async {
-    debugPrint("LibraryTab: Starting API call...");
-    try {
-      final response = await http.get(
-        Uri.parse('http://10.0.2.2:5207/api/Songs'),
-        //Uri.parse('http://192.168.29.101:5207/api/Songs'),
-      );
+    if (token == null || JwtDecoder.isExpired(token)) return null;
 
-      debugPrint("LibraryTab: API Response Status: ${response.statusCode}");
-      debugPrint(
-        "LibraryTab: API Response Body length: ${response.body.length}",
-      );
+    Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        debugPrint("LibraryTab: Parsed ${data.length} songs from API");
+    // Dựa theo cách bạn tạo token bằng ClaimTypes.NameIdentifier:
+    // => nó sẽ lưu trong key "nameid"
+    final userId = decodedToken['nameid']; // hoặc 'sub' nếu bạn đổi claim
 
-        final songs =
-            data.map((json) {
-              try {
-                final song = Song.fromJson(json);
-                debugPrint(
-                  "LibraryTab: Successfully parsed song: ${song.songName}",
-                );
-                return song;
-              } catch (e) {
-                debugPrint("LibraryTab: Error parsing song: $e");
-                debugPrint("LibraryTab: Problematic JSON: $json");
-                rethrow;
-              }
-            }).toList();
+    return int.tryParse(userId.toString());
+  }
 
-        debugPrint("LibraryTab: Total songs parsed: ${songs.length}");
-        return songs;
-      } else {
-        throw Exception('Failed to load songs: ${response.statusCode}');
-      }
-    } catch (e) {
-      debugPrint("LibraryTab: Error in fetchSongs: $e");
-      throw Exception('Failed to load songs: $e');
+  Future<void> fetchUserLibrary() async {
+    final userId = await getUserIdFromToken();
+    debugPrint('UserId: $userId');
+    final response = await http.get(
+      Uri.parse('http://10.0.2.2:5207/api/Users/$userId/lib'),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      final playlists =
+          (data['playlists'] as List)
+              .map((e) => PlaylistUser.fromJson(e))
+              .toList();
+      final artists =
+          (data['favoriteArtists'] as List)
+              .map((e) => Artist.fromJson(e))
+              .toList();
+
+      debugPrint('Playlists count: ${playlists.length}');
+      debugPrint('Artists count: ${artists.length}');
+      setState(() {
+        _items = [...playlists, ...artists];
+        _isLoading = false;
+      });
+    } else {
+      // Handle error
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    debugPrint(
-      "LibraryTab: Building widget, isLoading: $_isLoading, songs count: ${_songs?.length ?? 0}",
-    );
     return CustomScrollView(
       slivers: [
         SliverAppBar(
@@ -191,8 +162,13 @@ class _LibraryTabState extends State<LibraryTab> {
                               style: TextStyle(color: Colors.grey),
                             ),
                             onTap: () {
-                              // Xử lý khi chọn mục này
-                              Navigator.pop(context);
+                              // Navigator.pop(context);
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => CreatePlaylistScreen(),
+                                ),
+                              );
                             },
                           ),
                           ListTile(
@@ -328,36 +304,106 @@ class _LibraryTabState extends State<LibraryTab> {
         else
           SliverList(
             delegate: SliverChildBuilderDelegate((context, index) {
-              final song = _songs![index];
-              return ListTile(
-                onTap: () {
-                  _playSong(song);
-                },
-                leading: Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    image: DecorationImage(
-                      image: NetworkImage(song.songImage),
-                      fit: BoxFit.cover,
+              final item = _items[index];
+
+              Widget tile;
+
+              if (item is PlaylistUser) {
+                tile = ListTile(
+                  leading: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: const Icon(
+                      Icons.queue_music,
+                      size: 28,
+                      color: Colors.black54,
                     ),
                   ),
-                ),
-                title: Text(
-                  song.songName,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w500,
+                  title: Text(
+                    item.name,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
+                  onTap: () {
+                    // đi đến chi tiết playlist
+                  },
+                );
+              } else if (item is Artist) {
+                tile = ListTile(
+                  leading: Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      image: DecorationImage(
+                        image: NetworkImage(item.artistImage),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    item.artistName,
+                    style: const TextStyle(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  onTap: () {
+                    // đi đến chi tiết nghệ sĩ
+                  },
+                );
+              } else {
+                tile = const SizedBox.shrink(); // fallback an toàn
+              }
+
+              // Trả về widget có padding
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 6.0,
                 ),
-                subtitle: Text(
-                  song.artistName,
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
+                child: tile,
               );
-            }, childCount: _songs?.length ?? 0),
+            }, childCount: _items.length),
           ),
+        // SliverList(
+        //   delegate: SliverChildBuilderDelegate((context, index) {
+        //     final song = _songs![index];
+        //     return ListTile(
+        //       onTap: () {
+        //         _playSong(song);
+        //       },
+        //       leading: Container(
+        //         width: 56,
+        //         height: 56,
+        //         decoration: BoxDecoration(
+        //           borderRadius: BorderRadius.circular(4),
+        //           image: DecorationImage(
+        //             image: NetworkImage(song.songImage),
+        //             fit: BoxFit.cover,
+        //           ),
+        //         ),
+        //       ),
+        //       title: Text(
+        //         song.songName,
+        //         style: const TextStyle(
+        //           color: AppColors.textPrimary,
+        //           fontWeight: FontWeight.w500,
+        //         ),
+        //       ),
+        //       subtitle: Text(
+        //         song.artistName,
+        //         style: const TextStyle(color: AppColors.textSecondary),
+        //       ),
+        //     );
+        //   }, childCount: _songs?.length ?? 0),
+        // ),
       ],
     );
   }
