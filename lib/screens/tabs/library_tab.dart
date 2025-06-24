@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_music_app/library/playlist_user_lib.dart';
 import 'package:flutter_music_app/model/artist.dart';
 import 'package:flutter_music_app/model/playlist_user.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
-import '../../model/song.dart';
-import '../../music/play_music/playing_music.dart';
-import '../../music/play_music/audio_player_manager.dart';
+// import '../../model/song.dart';
+// import '../../music/play_music/playing_music.dart';
+// import '../../music/play_music/audio_player_manager.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../user/create_playlist_screen.dart';
@@ -32,22 +33,22 @@ class _LibraryTabState extends State<LibraryTab> {
     fetchUserLibrary();
   }
 
-  void _playSong(Song song) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder:
-            (context) => PlayingMusicInterface(
-              song: song,
-              audioPlayerManager: AudioPlayerManager(songUrl: song.linkSong),
-              onNext: () {},
-              onPrevious: () {},
-              onShuffle: (isShuffled) {},
-              onRepeat: (loopMode) {},
-            ),
-      ),
-    );
-  }
+  // void _playSong(Song song) {
+  //   Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder:
+  //           (context) => PlayingMusicInterface(
+  //             song: song,
+  //             audioPlayerManager: AudioPlayerManager(songUrl: song.linkSong),
+  //             onNext: () {},
+  //             onPrevious: () {},
+  //             onShuffle: (isShuffled) {},
+  //             onRepeat: (loopMode) {},
+  //           ),
+  //     ),
+  //   );
+  // }
 
   Future<int?> getUserIdFromToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -332,6 +333,12 @@ class _LibraryTabState extends State<LibraryTab> {
                   ),
                   onTap: () {
                     // đi đến chi tiết playlist
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PlaylistUserLib(playlistID: item.id),
+                      ),
+                    );
                   },
                 );
               } else if (item is Artist) {
@@ -372,38 +379,6 @@ class _LibraryTabState extends State<LibraryTab> {
               );
             }, childCount: _items.length),
           ),
-        // SliverList(
-        //   delegate: SliverChildBuilderDelegate((context, index) {
-        //     final song = _songs![index];
-        //     return ListTile(
-        //       onTap: () {
-        //         _playSong(song);
-        //       },
-        //       leading: Container(
-        //         width: 56,
-        //         height: 56,
-        //         decoration: BoxDecoration(
-        //           borderRadius: BorderRadius.circular(4),
-        //           image: DecorationImage(
-        //             image: NetworkImage(song.songImage),
-        //             fit: BoxFit.cover,
-        //           ),
-        //         ),
-        //       ),
-        //       title: Text(
-        //         song.songName,
-        //         style: const TextStyle(
-        //           color: AppColors.textPrimary,
-        //           fontWeight: FontWeight.w500,
-        //         ),
-        //       ),
-        //       subtitle: Text(
-        //         song.artistName,
-        //         style: const TextStyle(color: AppColors.textSecondary),
-        //       ),
-        //     );
-        //   }, childCount: _songs?.length ?? 0),
-        // ),
       ],
     );
   }

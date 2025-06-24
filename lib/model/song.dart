@@ -13,10 +13,10 @@ class Song {
   final int songId;
   final String songName;
   final String songImage;
-  final String linkSong;
+  final String? linkSong;
   final String? linkLrc;
-  final int views;
-  final String artistName;
+  final int? views;
+  final String? artistName;
 
   // bool favorite;
   // int counter;
@@ -39,20 +39,20 @@ class Song {
     required this.songId,
     required this.songName,
     required this.songImage,
-    required this.linkSong,
+    this.linkSong,
     this.linkLrc,
-    required this.views,
-    required this.artistName,
+    this.views,
+    this.artistName,
   });
   factory Song.fromJson(Map<String, dynamic> json) {
     return Song(
-      songId: json['songId'] as int,
-      songName: json['songName'] as String,
-      songImage: json['songImage'] as String,
-      linkSong: json['linkSong'] as String,
-      linkLrc: json['linkLrc'] as String?,
-      views: json['views'] as int? ?? 0,
-      artistName: json['artistName'] as String? ?? 'Unknown Artist',
+      songId: json['songId'],
+      songName: json['songName'] ?? '',
+      songImage: json['songImage'] ?? '',
+      linkSong: json['linkSong'] ?? '',
+      linkLrc: json['linkLrc'] ?? '',
+      views: json['views'] ?? 0,
+      artistName: json['artistName'] ?? 'Unknown Artist',
     );
   }
 

@@ -11,20 +11,16 @@ import '../service/notifications_service.dart';
 class PlayingMusicInterface extends StatefulWidget {
   const PlayingMusicInterface({
     super.key,
-    required this.song,
-    required this.audioPlayerManager,
-    required this.onNext,
-    required this.onPrevious,
-    required this.onShuffle,
-    required this.onRepeat,
+    required this.songs,
+    required this.currentIndex,
   });
 
-  final Song song;
-  final AudioPlayerManager audioPlayerManager;
-  final VoidCallback onNext;
-  final VoidCallback onPrevious;
-  final ValueChanged<bool> onShuffle;
-  final ValueChanged<LoopMode> onRepeat;
+  final List<Song> songs;
+  final int currentIndex;
+  // final VoidCallback onNext;
+  // final VoidCallback onPrevious;
+  // final ValueChanged<bool> onShuffle;
+  // final ValueChanged<LoopMode> onRepeat;
 
   @override
   State<PlayingMusicInterface> createState() => _PlayingMusicInterfaceState();
@@ -45,6 +41,12 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   Color defaultColor = Colors.black;
   double volume = 1.0;
   final ScrollController _lyricsScrollController = ScrollController();
+  late List<Song> songs;
+  late int currentIndex;
+  late Song currentSong;
+  late AudioPlayerManager audioPlayerManager;
+  bool _isNexting = false;
+  StreamSubscription<PlayerState>? _playerStateSub;
 
   @override
   void initState() {
@@ -65,7 +67,11 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
         curve: Curves.easeInOut,
       ),
     );
-    showMusicNotification(widget.song.artistName, widget.song.songName);
+    songs = widget.songs;
+    currentIndex = widget.currentIndex;
+    currentSong = songs[currentIndex];
+    audioPlayerManager = AudioPlayerManager(songUrl: currentSong.linkSong!);
+    showMusicNotification(currentSong.artistName!, currentSong.songName);
     _initPlayer();
     _generateColors();
   }
@@ -74,6 +80,8 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   void dispose() {
     _lyricsScrollController.dispose();
     _pageAnimationController.dispose();
+    _playerStateSub?.cancel();
+    audioPlayerManager.dispose();
     super.dispose();
   }
 
@@ -105,18 +113,48 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   Future<void> _initPlayer() async {
-    await widget.audioPlayerManager.init(); // Đợi nhạc load xong
-    widget.audioPlayerManager.player.play(); // Bắt đầu phát nhạc
-    _loadLyrics();
-    widget.audioPlayerManager.player.positionStream.listen(_updateCurrentLyric);
+    await audioPlayerManager.init(); // Đợi nhạc load xong
+    audioPlayerManager.player.play(); // Bắt đầu phát nhạc
+    await  _loadLyrics();
+    audioPlayerManager.player.positionStream.listen(_updateCurrentLyric);
+    _playerStateSub?.cancel(); // hủy lắng nghe cũ
+
+    _playerStateSub = audioPlayerManager.player.playerStateStream.listen((
+      state,
+    ) {
+      if (state.processingState == ProcessingState.completed && !_isNexting) {
+        _isNexting = true;
+        _playNextSong().then((_) => _isNexting = false);
+      }
+    });
+  }
+
+  Future<void> _playNextSong() async {
+    if (currentIndex < songs.length - 1) {
+      setState(() {
+        debugPrint('${currentIndex}');
+        currentIndex++;
+        currentSong = songs[currentIndex];
+        debugPrint('${currentIndex}');
+      });
+
+      audioPlayerManager = AudioPlayerManager(songUrl: currentSong.linkSong!);
+      await showMusicNotification(
+        currentSong.artistName!,
+        currentSong.songName,
+      );
+      await _initPlayer();
+    } else {
+      debugPrint("Đã đến bài cuối cùng");
+    }
   }
 
   Future<void> _loadLyrics() async {
     try {
-      debugPrint("Loading lyrics for song: ${widget.song.songName}");
-      debugPrint("LRC URL: ${widget.song.linkLrc}");
+      debugPrint("Loading lyrics for song: ${currentSong.songName}");
+      debugPrint("LRC URL: ${currentSong.linkLrc}");
 
-      if (widget.song.linkLrc == null || widget.song.linkLrc == "null") {
+      if (currentSong.linkLrc == null || currentSong.linkLrc == "null") {
         debugPrint("No LRC URL provided for this song");
         setState(() {
           _lyrics = Lyrics(
@@ -127,7 +165,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
         return;
       }
 
-      final lyrics = await Lyrics.fromUrl(widget.song.linkLrc);
+      final lyrics = await Lyrics.fromUrl(currentSong.linkLrc);
 
       if (lyrics.error != null) {
         debugPrint("Error loading lyrics: ${lyrics.error}");
@@ -151,7 +189,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
 
   Future<void> _generateColors() async {
     try {
-      final imageProvider = NetworkImage(widget.song.songImage);
+      final imageProvider = NetworkImage(currentSong.songImage);
       final Completer<Size> completer = Completer<Size>();
 
       final imageStream = imageProvider.resolve(const ImageConfiguration());
@@ -196,6 +234,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   void _updateCurrentLyric(Duration position) {
+    debugPrint("current position: $position");
     if (_lyrics == null || _lyrics!.lines.isEmpty) return;
 
     for (int i = 0; i < _lyrics!.lines.length; i++) {
@@ -218,10 +257,12 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
 
     final itemHeight = 60.0; // Chiều cao của mỗi dòng lời bài hát
     final screenHeight = MediaQuery.of(context).size.height;
-    final viewportHeight = screenHeight * 0.6; // Chiều cao vùng hiển thị lời bài hát
+    final viewportHeight =
+        screenHeight * 0.6; // Chiều cao vùng hiển thị lời bài hát
 
     // Tính toán vị trí cần cuộn đến
-    final targetPosition = _currentLyricIndex * itemHeight - (viewportHeight / 2) + itemHeight;
+    final targetPosition =
+        _currentLyricIndex * itemHeight - (viewportHeight / 2) + itemHeight;
 
     // Đảm bảo không cuộn quá giới hạn
     final maxScroll = _lyricsScrollController.position.maxScrollExtent;
@@ -252,7 +293,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            widget.song.songName,
+            currentSong.songName,
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -289,7 +330,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
       onHorizontalDragEnd: _handleSwipe,
       child: Center(
         child: Hero(
-          tag: 'album_art_${widget.song.songId}',
+          tag: 'album_art_${currentSong.songId}',
           child: Container(
             width: MediaQuery.of(context).size.width * 0.7,
             height: MediaQuery.of(context).size.width * 0.7,
@@ -310,7 +351,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               turns: _imageAnimationController,
               child: ClipOval(
                 child: Image.network(
-                  widget.song.songImage,
+                  currentSong.songImage,
                   fit: BoxFit.cover,
                   errorBuilder: (context, error, stackTrace) {
                     return Container(
@@ -343,7 +384,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.song.songName,
+                  currentSong.songName,
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -354,7 +395,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  widget.song.artistName,
+                  currentSong.artistName!,
                   style: const TextStyle(fontSize: 16, color: Colors.grey),
                   textAlign: TextAlign.left,
                   overflow: TextOverflow.ellipsis,
@@ -402,12 +443,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
       onHorizontalDragEnd: _handleSwipe,
       child: ListView.builder(
         controller: _lyricsScrollController,
-        padding: EdgeInsets.only(
-          left: 12,
-          right: 12,
-          top: 0,
-          bottom: 0,
-        ),
+        padding: EdgeInsets.only(left: 12, right: 12, top: 0, bottom: 0),
         itemCount: _lyrics!.lines.length,
         itemBuilder: (context, index) {
           final line = _lyrics!.lines[index];
@@ -421,10 +457,16 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             child: AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 200),
               style: TextStyle(
-                fontSize: isCurrentLine ? 20 : (isNextLine || isPreviousLine ? 18 : 16),
-                color: isCurrentLine 
-                    ? Colors.white 
-                    : (isNextLine || isPreviousLine ? Colors.white70 : Colors.grey),
+                fontSize:
+                    isCurrentLine
+                        ? 20
+                        : (isNextLine || isPreviousLine ? 18 : 16),
+                color:
+                    isCurrentLine
+                        ? Colors.white
+                        : (isNextLine || isPreviousLine
+                            ? Colors.white70
+                            : Colors.grey),
                 fontWeight: isCurrentLine ? FontWeight.bold : FontWeight.normal,
                 fontFamily: 'Roboto',
                 height: 1.5,
@@ -447,11 +489,11 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     return Column(
       children: [
         StreamBuilder<Duration?>(
-          stream: widget.audioPlayerManager.player.positionStream,
+          stream: audioPlayerManager.player.positionStream,
           builder: (context, snapshot) {
             final position = snapshot.data ?? Duration.zero;
             final duration =
-                widget.audioPlayerManager.player.duration ?? Duration.zero;
+                audioPlayerManager.player.duration ?? Duration.zero;
             return Column(
               children: [
                 SliderTheme(
@@ -478,7 +520,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                             ? duration.inMilliseconds.toDouble()
                             : 1,
                     onChanged: (value) {
-                      widget.audioPlayerManager.player.seek(
+                      audioPlayerManager.player.seek(
                         Duration(milliseconds: value.toInt()),
                       );
                     },
@@ -517,10 +559,23 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             IconButton(
               icon: const Icon(Icons.skip_previous, color: Colors.white),
               iconSize: 36,
-              onPressed: widget.onPrevious,
+              onPressed: () async {
+                if (currentIndex > 0) {
+                  setState(() {
+                    currentIndex--;
+                    currentSong = songs[currentIndex];
+                  });
+                  await _loadLyrics();
+                  await audioPlayerManager.playNewSong(currentSong.linkSong!);
+                } else {
+                  // ✅ Nếu đang ở bài đầu → phát lại bài hiện tại
+                  audioPlayerManager.player.seek(Duration.zero);
+                  audioPlayerManager.player.play();
+                }
+              },
             ),
             StreamBuilder<PlayerState>(
-              stream: widget.audioPlayerManager.player.playerStateStream,
+              stream: audioPlayerManager.player.playerStateStream,
               builder: (context, snapshot) {
                 final playerState = snapshot.data;
                 final processingState = playerState?.processingState;
@@ -538,7 +593,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                     icon: const Icon(Icons.play_arrow, color: Colors.white),
                     iconSize: 64,
                     onPressed: () {
-                      widget.audioPlayerManager.player.play();
+                      audioPlayerManager.player.play();
                       // MusicPlayerManager.resumeMusic();
                     },
                   );
@@ -547,7 +602,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                     icon: const Icon(Icons.pause, color: Colors.white),
                     iconSize: 64,
                     onPressed: () {
-                      widget.audioPlayerManager.player.pause();
+                      audioPlayerManager.player.pause();
                       // MusicPlayerManager.pauseMusic();
                     },
                   );
@@ -557,7 +612,20 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             IconButton(
               icon: const Icon(Icons.skip_next, color: Colors.white),
               iconSize: 36,
-              onPressed: widget.onNext,
+              onPressed: () async {
+                if (currentIndex < songs.length - 1) {
+                  setState(() {
+                    currentIndex++;
+                    currentSong = songs[currentIndex];
+                  });
+                  await _loadLyrics();
+                  await audioPlayerManager.playNewSong(currentSong.linkSong!);
+                } else {
+                  // ✅ Nếu đang ở bài đầu → phát lại bài hiện tại
+                  audioPlayerManager.player.seek(Duration.zero);
+                  audioPlayerManager.player.play();
+                }
+              },
             ),
           ],
         ),
@@ -582,7 +650,6 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               onPressed: () {
                 setState(() {
                   _isShuffled = !_isShuffled;
-                  widget.onShuffle(_isShuffled);
                 });
               },
             ),
@@ -597,7 +664,6 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               onPressed: () {
                 setState(() {
                   _loopMode = _getNextLoopMode();
-                  widget.onRepeat(_loopMode);
                 });
               },
             ),

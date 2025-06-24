@@ -32,6 +32,12 @@ class AudioPlayerManager {
     }
   }
 
+  Future<void> playNewSong(String url) async {
+    await player.stop();
+    await player.setUrl(url);
+    await player.play();
+  }
+
   void dispose() {
     player.dispose();
     _logger.info('AudioPlayer disposed');

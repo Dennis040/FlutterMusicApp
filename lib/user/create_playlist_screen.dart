@@ -187,7 +187,7 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                   ),
                 ),
                 title: Text(song.songName),
-                subtitle: Text(song.artistName),
+                subtitle: Text(song.artistName!),
                 trailing: Checkbox(
                   value: selected,
                   onChanged: (checked) {
