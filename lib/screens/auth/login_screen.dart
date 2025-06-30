@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../config/config.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -27,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> loginUser() async {
     final url = Uri.parse(
-      'http://10.0.2.2:5207/api/Users/login',
+      '${ip}Users/login',
     ); // dùng 10.0.2.2 nếu là Android Emulator
     final response = await http.post(
       url,

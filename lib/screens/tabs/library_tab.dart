@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_music_app/library/artist_user_lib.dart';
 import 'package:flutter_music_app/library/playlist_user_lib.dart';
 import 'package:flutter_music_app/model/artist.dart';
 import 'package:flutter_music_app/model/playlist_user.dart';
@@ -11,6 +12,7 @@ import '../../constants/app_colors.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../user/create_playlist_screen.dart';
+import '../../config/config.dart';
 
 class LibraryTab extends StatefulWidget {
   const LibraryTab({super.key});
@@ -68,9 +70,7 @@ class _LibraryTabState extends State<LibraryTab> {
   Future<void> fetchUserLibrary() async {
     final userId = await getUserIdFromToken();
     debugPrint('UserId: $userId');
-    final response = await http.get(
-      Uri.parse('http://10.0.2.2:5207/api/Users/$userId/lib'),
-    );
+    final response = await http.get(Uri.parse('${ip}Users/$userId/lib'));
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
@@ -240,12 +240,22 @@ class _LibraryTabState extends State<LibraryTab> {
                     }
                   },
                   backgroundColor: AppColors.surface,
-                  selectedColor: Colors.white,
+                  selectedColor: AppColors.primaryColor.withOpacity(0.15),
+                  shape: const StadiumBorder(),
+                  showCheckmark: false,
+                  side: BorderSide(
+                    color:
+                        _selectedFilter == 0
+                            ? AppColors.primaryColor
+                            : Colors.grey.shade400,
+                    width: 1.5,
+                  ),
                   labelStyle: TextStyle(
                     color:
                         _selectedFilter == 0
-                            ? AppColors.primaryDark
+                            ? AppColors.primaryColor
                             : AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -260,34 +270,25 @@ class _LibraryTabState extends State<LibraryTab> {
                     }
                   },
                   backgroundColor: AppColors.surface,
-                  selectedColor: Colors.white,
+                  selectedColor: AppColors.primaryColor.withOpacity(0.15),
+                  shape: const StadiumBorder(),
+                  showCheckmark: false,
+                  side: BorderSide(
+                    color:
+                        _selectedFilter == 1
+                            ? AppColors.primaryColor
+                            : Colors.grey.shade400,
+                    width: 1.5,
+                  ),
                   labelStyle: TextStyle(
                     color:
                         _selectedFilter == 1
-                            ? AppColors.primaryDark
+                            ? AppColors.primaryColor
                             : AppColors.textPrimary,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(width: 8),
-                FilterChip(
-                  label: const Text('Albums'),
-                  selected: _selectedFilter == 2,
-                  onSelected: (bool selected) {
-                    if (selected) {
-                      setState(() {
-                        _selectedFilter = 2;
-                      });
-                    }
-                  },
-                  backgroundColor: AppColors.surface,
-                  selectedColor: Colors.white,
-                  labelStyle: TextStyle(
-                    color:
-                        _selectedFilter == 2
-                            ? AppColors.primaryDark
-                            : AppColors.textPrimary,
-                  ),
-                ),
               ],
             ),
           ),
@@ -308,8 +309,7 @@ class _LibraryTabState extends State<LibraryTab> {
               final item = _items[index];
 
               Widget tile;
-
-              if (item is PlaylistUser) {
+              if (item is PlaylistUser && _selectedFilter == 0) {
                 tile = ListTile(
                   leading: Container(
                     width: 56,
@@ -336,12 +336,13 @@ class _LibraryTabState extends State<LibraryTab> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => PlaylistUserLib(playlistID: item.id),
+                        builder:
+                            (context) => PlaylistUserLib(playlistID: item.id),
                       ),
                     );
                   },
                 );
-              } else if (item is Artist) {
+              } else if (item is Artist && _selectedFilter == 1) {
                 tile = ListTile(
                   leading: Container(
                     width: 56,
@@ -363,6 +364,13 @@ class _LibraryTabState extends State<LibraryTab> {
                   ),
                   onTap: () {
                     // đi đến chi tiết nghệ sĩ
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => ArtistUserLib(artistID: item.artistId),
+                      ),
+                    );
                   },
                 );
               } else {

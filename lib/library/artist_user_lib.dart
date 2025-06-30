@@ -6,18 +6,20 @@ import 'package:flutter/services.dart';
 import 'package:flutter_music_app/model/song.dart';
 import '../../config/config.dart';
 
-class PlaylistUserLib extends StatefulWidget {
-  final int playlistID;
-  const PlaylistUserLib({super.key, required this.playlistID});
+class ArtistUserLib extends StatefulWidget {
+  final int artistID;
+  const ArtistUserLib({super.key, required this.artistID});
   @override
-  State<PlaylistUserLib> createState() => _PlaylistScreenState();
+  State<ArtistUserLib> createState() => _ArtistScreenState();
 }
 
-class _PlaylistScreenState extends State<PlaylistUserLib> {
+class _ArtistScreenState extends State<ArtistUserLib> {
   final ScrollController _scrollController = ScrollController();
   double _scrollOffset = 0.0;
   bool _showStickyHeader = false;
   List<Song>? _songs = [];
+  String? _artistImage;
+  String? _artistName;
 
   @override
   void initState() {
@@ -34,6 +36,16 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
         .catchError((e) {
           debugPrint("Error occurred while fetching songs");
         });
+    getImageArtist().then((value) {
+      setState(() {
+        _artistImage = value;
+      });
+    });
+    getArtistName().then((value) {
+      setState(() {
+        _artistName = value;
+      });
+    });
   }
 
   void _scrollListener() {
@@ -48,10 +60,8 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
       context,
       MaterialPageRoute(
         builder:
-            (context) => PlayingMusicInterface(
-              songs: _songs!,
-              currentIndex: index,
-            ),
+            (context) =>
+                PlayingMusicInterface(songs: _songs!, currentIndex: index),
       ),
     );
   }
@@ -60,9 +70,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
     debugPrint("Starting API call...");
     try {
       final response = await http.get(
-        Uri.parse(
-          '${ip}PlaylistUsers/playlists/${widget.playlistID}/songs',
-        ),
+        Uri.parse('${ip}Artists/playlists/${widget.artistID}/songs'),
         //Uri.parse('http://192.168.29.101:5207/api/Songs'),
       );
 
@@ -96,6 +104,36 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
     }
   }
 
+  Future<String?> getImageArtist() async {
+    final response = await http.get(
+      Uri.parse('${ip}Artists/${widget.artistID}'),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['artistImage'] as String;
+    } else {
+      // Có thể log lỗi hoặc throw exception tùy bạn
+      debugPrint("Lỗi: ${response.statusCode}");
+      return null;
+    }
+  }
+
+  Future<String?> getArtistName() async {
+    final response = await http.get(
+      Uri.parse('${ip}Artists/${widget.artistID}'),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['artistName'] as String;
+    } else {
+      // Có thể log lỗi hoặc throw exception tùy bạn
+      debugPrint("Lỗi: ${response.statusCode}");
+      return null;
+    }
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -126,7 +164,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                     if (index == 0) {
                       return _buildActionButtons();
                     }
-                    return _buildTrackItem(_songs![index - 1], index-1);
+                    return _buildTrackItem(_songs![index - 1], index - 1);
                   }, childCount: _songs!.length + 1),
                 ),
               ],
@@ -154,7 +192,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(height: 60),
+              SizedBox(height: 50),
               _buildPlaylistCover(),
               SizedBox(height: 30),
               _buildPlaylistInfo(),
@@ -183,42 +221,10 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
-        child: GridView.count(
-          crossAxisCount: 2,
-          mainAxisSpacing: 2,
-          crossAxisSpacing: 2,
-          physics: NeverScrollableScrollPhysics(),
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFF093FB), Color(0xFFF5576C)],
-                ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF4FACFE), Color(0xFF00F2FE)],
-                ),
-              ),
-            ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF43E97B), Color(0xFF38F9D7)],
-                ),
-              ),
-            ),
-          ],
-        ),
+        child:
+            _artistImage == null
+                ? CircularProgressIndicator()
+                : Image.network(_artistImage!),
       ),
     );
   }
@@ -232,7 +238,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                 colors: [Colors.white, Color(0xFFE0E7FF)],
               ).createShader(bounds),
           child: Text(
-            "Danh sách phát thứ 1 của tôi",
+            "Danh sách bài hát của ${_artistName}",
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -378,7 +384,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
         child: InkWell(
           onTap: () {
             HapticFeedback.lightImpact();
-            _playSong(song,index);
+            _playSong(song, index);
           },
           borderRadius: BorderRadius.circular(8),
           child: Container(
@@ -444,10 +450,13 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
       child: Container(
         height: 80,
         decoration: BoxDecoration(
-          color: Color(0xFF1A1A2E).withOpacity(0.95),
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10),
-          ],
+          image:
+              _artistImage != null
+                  ? DecorationImage(
+                    image: NetworkImage(_artistImage!),
+                    fit: BoxFit.cover,
+                  )
+                  : null,
         ),
         child: SafeArea(
           child: Padding(
@@ -458,10 +467,13 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(4),
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF4C1D95), Color(0xFF1A1A2E)],
-                    ),
+                    image:
+                        _artistImage != null
+                            ? DecorationImage(
+                              image: NetworkImage(_artistImage!),
+                              fit: BoxFit.cover,
+                            )
+                            : null,
                   ),
                 ),
                 SizedBox(width: 15),
@@ -471,7 +483,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Danh sách phát thứ 1 của tôi",
+                        "Danh sách bài hát của ${_artistName}",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

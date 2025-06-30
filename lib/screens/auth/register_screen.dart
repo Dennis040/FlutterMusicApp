@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../constants/app_colors.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../config/config.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -31,7 +32,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> registerUser() async {
     final url = Uri.parse(
-      'http://10.0.2.2:5207/api/Users/register',
+      '${ip}Users/register',
     ); // dùng 10.0.2.2 nếu là Android Emulator
     final response = await http.post(
       url,

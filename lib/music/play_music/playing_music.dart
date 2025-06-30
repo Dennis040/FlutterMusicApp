@@ -234,7 +234,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   void _updateCurrentLyric(Duration position) {
-    debugPrint("current position: $position");
+    // debugPrint("current position: $position");
     if (_lyrics == null || _lyrics!.lines.isEmpty) return;
 
     for (int i = 0; i < _lyrics!.lines.length; i++) {
