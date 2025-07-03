@@ -248,44 +248,6 @@ class _ArtistScreenState extends State<ArtistUserLib> {
           ),
         ),
         SizedBox(height: 15),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [Color(0xFFFF6B6B), Color(0xFFEE5A24)],
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  "K",
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(width: 10),
-            Text(
-              "khang",
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.white.withOpacity(0.9),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 10),
-        Text(
-          "1 giờ 40 phút",
-          style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7)),
-        ),
       ],
     );
   }

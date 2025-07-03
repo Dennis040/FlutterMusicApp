@@ -42,7 +42,9 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   double volume = 1.0;
   final ScrollController _lyricsScrollController = ScrollController();
   late List<Song> songs;
+  late List<Song> shuffledList;
   late int currentIndex;
+  late int currentIndexS;
   late Song currentSong;
   late AudioPlayerManager audioPlayerManager;
   bool _isNexting = false;
@@ -71,9 +73,10 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     currentIndex = widget.currentIndex;
     currentSong = songs[currentIndex];
     audioPlayerManager = AudioPlayerManager(songUrl: currentSong.linkSong!);
-    showMusicNotification(currentSong.artistName!, currentSong.songName);
+    showMusicNotification(currentSong);
     _initPlayer();
     _generateColors();
+    initializeNotifications(songs, currentIndex);
   }
 
   @override
@@ -115,7 +118,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   Future<void> _initPlayer() async {
     await audioPlayerManager.init(); // Đợi nhạc load xong
     audioPlayerManager.player.play(); // Bắt đầu phát nhạc
-    await  _loadLyrics();
+    await _loadLyrics();
     audioPlayerManager.player.positionStream.listen(_updateCurrentLyric);
     _playerStateSub?.cancel(); // hủy lắng nghe cũ
 
@@ -132,17 +135,19 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   Future<void> _playNextSong() async {
     if (currentIndex < songs.length - 1) {
       setState(() {
-        debugPrint('${currentIndex}');
         currentIndex++;
+        if (_isShuffled) {
+          currentSong = shuffledList[currentIndex];
+        }
+        else {
+        // debugPrint('${currentIndex}');
         currentSong = songs[currentIndex];
-        debugPrint('${currentIndex}');
+        // debugPrint('${currentIndex}');
+        }
       });
 
       audioPlayerManager = AudioPlayerManager(songUrl: currentSong.linkSong!);
-      await showMusicNotification(
-        currentSong.artistName!,
-        currentSong.songName,
-      );
+      await showMusicNotification(currentSong);
       await _initPlayer();
     } else {
       debugPrint("Đã đến bài cuối cùng");
@@ -563,10 +568,16 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 if (currentIndex > 0) {
                   setState(() {
                     currentIndex--;
+                     if(_isShuffled){
+                      currentSong = shuffledList[currentIndex];
+                    }
+                    else{
                     currentSong = songs[currentIndex];
+                    }
                   });
                   await _loadLyrics();
                   await audioPlayerManager.playNewSong(currentSong.linkSong!);
+                  showMusicNotification(currentSong);
                 } else {
                   // ✅ Nếu đang ở bài đầu → phát lại bài hiện tại
                   audioPlayerManager.player.seek(Duration.zero);
@@ -616,10 +627,16 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 if (currentIndex < songs.length - 1) {
                   setState(() {
                     currentIndex++;
+                    if(_isShuffled){
+                      currentSong = shuffledList[currentIndex];
+                    }
+                    else{
                     currentSong = songs[currentIndex];
+                    }
                   });
                   await _loadLyrics();
                   await audioPlayerManager.playNewSong(currentSong.linkSong!);
+                  showMusicNotification(currentSong);
                 } else {
                   // ✅ Nếu đang ở bài đầu → phát lại bài hiện tại
                   audioPlayerManager.player.seek(Duration.zero);
@@ -642,28 +659,31 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             IconButton(
               icon: Icon(
                 Icons.shuffle,
-                color:
-                    _isShuffled
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.white,
+                color: _isShuffled ? Colors.green : Colors.white,
               ),
               onPressed: () {
                 setState(() {
                   _isShuffled = !_isShuffled;
+                  if(_isShuffled){
+                  shuffledList = List.from(songs);
+                  shuffledList.shuffle();
+                  currentIndex = shuffledList.indexOf(currentSong);
+                  }
+                  else{
+                    currentIndex = songs.indexOf(currentSong);
+                  }
                 });
               },
             ),
             IconButton(
               icon: Icon(
                 _getRepeatIcon(),
-                color:
-                    _loopMode != LoopMode.off
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.white,
+                color: _loopMode == LoopMode.one ? Colors.green : Colors.white,
               ),
               onPressed: () {
                 setState(() {
                   _loopMode = _getNextLoopMode();
+                  audioPlayerManager.player.setLoopMode(_loopMode);
                 });
               },
             ),
@@ -687,24 +707,10 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   IconData _getRepeatIcon() {
-    switch (_loopMode) {
-      case LoopMode.off:
-        return Icons.repeat;
-      case LoopMode.one:
-        return Icons.repeat_one;
-      case LoopMode.all:
-        return Icons.repeat;
-    }
+    return _loopMode == LoopMode.one ? Icons.repeat_one : Icons.repeat;
   }
 
   LoopMode _getNextLoopMode() {
-    switch (_loopMode) {
-      case LoopMode.off:
-        return LoopMode.all;
-      case LoopMode.all:
-        return LoopMode.one;
-      case LoopMode.one:
-        return LoopMode.off;
-    }
+    return _loopMode == LoopMode.off ? LoopMode.one : LoopMode.off;
   }
 }
