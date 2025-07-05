@@ -1,12 +1,13 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_music_app/music/handle/audio_handler.dart';
 import 'package:page_transition/page_transition.dart';
 import 'constants/app_colors.dart';
 import 'screens/auth/start_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home_screen.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 Future<void> requestNotificationPermission() async {
@@ -17,23 +18,19 @@ Future<void> requestNotificationPermission() async {
     debugPrint("Notification permission denied");
   }
 }
-
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
+late final AudioHandler globalAudioHandler;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  globalAudioHandler = await AudioService.init(
+  builder: () => MyAudioHandler(), // ✅ BẮT BUỘC
+  config: const AudioServiceConfig(
+    androidNotificationChannelId: 'com.example.app.channel.audio',
+    androidNotificationChannelName: 'Music Playback',
+    androidNotificationOngoing: true,
+  ),
+);
 
-  // Khởi tạo notification cho Android
-  const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
-
-  // Có thể thêm iOS nếu cần sau này
-  const InitializationSettings initializationSettings = InitializationSettings(
-    android: initializationSettingsAndroid,
-  );
-
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-  await requestNotificationPermission();
+  // await requestNotificationPermission();
 
   // Khóa xoay màn hình
   SystemChrome.setPreferredOrientations([

@@ -1,12 +1,13 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_music_app/main.dart';
+import 'package:flutter_music_app/music/handle/audio_handler.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:palette_generator/palette_generator.dart';
 import '../../model/song.dart';
 import '../../model/lyrics.dart';
 // import '../service/lyrics_service.dart';
-import 'audio_player_manager.dart';
 import 'dart:async';
-import '../service/notifications_service.dart';
 
 class PlayingMusicInterface extends StatefulWidget {
   const PlayingMusicInterface({
@@ -46,7 +47,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   late int currentIndex;
   late int currentIndexS;
   late Song currentSong;
-  late AudioPlayerManager audioPlayerManager;
+  // late AudioPlayerManager audioPlayerManager;
   bool _isNexting = false;
   StreamSubscription<PlayerState>? _playerStateSub;
 
@@ -72,11 +73,16 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     songs = widget.songs;
     currentIndex = widget.currentIndex;
     currentSong = songs[currentIndex];
-    audioPlayerManager = AudioPlayerManager(songUrl: currentSong.linkSong!);
-    showMusicNotification(currentSong);
+    // audioPlayerManager = AudioPlayerManager(songUrl: currentSong.linkSong!);
     _initPlayer();
     _generateColors();
-    initializeNotifications(songs, currentIndex);
+    final mediaItem = MediaItem(
+      id: currentSong.linkSong!, // hoặc link bài nhạc
+      title: currentSong.songName,
+      artist: currentSong.artistName,
+      artUri: Uri.parse(currentSong.songImage),
+    );
+    globalAudioHandler.addQueueItem(mediaItem);
   }
 
   @override
@@ -84,7 +90,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     _lyricsScrollController.dispose();
     _pageAnimationController.dispose();
     _playerStateSub?.cancel();
-    audioPlayerManager.dispose();
+    // audioPlayerManager.dispose();
     super.dispose();
   }
 
@@ -116,20 +122,24 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   Future<void> _initPlayer() async {
-    await audioPlayerManager.init(); // Đợi nhạc load xong
-    audioPlayerManager.player.play(); // Bắt đầu phát nhạc
+    // await audioPlayerManager.init(); // Đợi nhạc load xong
+    // audioPlayerManager.player.play(); // Bắt đầu phát nhạc
     await _loadLyrics();
-    audioPlayerManager.player.positionStream.listen(_updateCurrentLyric);
+    (globalAudioHandler as MyAudioHandler).player.positionStream.listen(
+      _updateCurrentLyric,
+    );
     _playerStateSub?.cancel(); // hủy lắng nghe cũ
 
-    _playerStateSub = audioPlayerManager.player.playerStateStream.listen((
-      state,
-    ) {
-      if (state.processingState == ProcessingState.completed && !_isNexting) {
-        _isNexting = true;
-        _playNextSong().then((_) => _isNexting = false);
-      }
-    });
+    _playerStateSub = (globalAudioHandler as MyAudioHandler)
+        .player
+        .playerStateStream
+        .listen((state) {
+          if (state.processingState == ProcessingState.completed &&
+              !_isNexting) {
+            _isNexting = true;
+            _playNextSong().then((_) => _isNexting = false);
+          }
+        });
   }
 
   Future<void> _playNextSong() async {
@@ -138,16 +148,21 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
         currentIndex++;
         if (_isShuffled) {
           currentSong = shuffledList[currentIndex];
-        }
-        else {
-        // debugPrint('${currentIndex}');
-        currentSong = songs[currentIndex];
-        // debugPrint('${currentIndex}');
+        } else {
+          // debugPrint('${currentIndex}');
+          currentSong = songs[currentIndex];
+          // debugPrint('${currentIndex}');
         }
       });
-
-      audioPlayerManager = AudioPlayerManager(songUrl: currentSong.linkSong!);
-      await showMusicNotification(currentSong);
+      final mediaItem = MediaItem(
+        id: currentSong.linkSong!, // hoặc link bài nhạc
+        title: currentSong.songName,
+        artist: currentSong.artistName,
+        artUri: Uri.parse(currentSong.songImage),
+      );
+      globalAudioHandler.addQueueItem(mediaItem);
+      // audioPlayerManager = AudioPlayerManager(songUrl: currentSong.linkSong!);
+      // await showMusicNotification(currentSong, audioPlayerManager);
       await _initPlayer();
     } else {
       debugPrint("Đã đến bài cuối cùng");
@@ -494,11 +509,12 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     return Column(
       children: [
         StreamBuilder<Duration?>(
-          stream: audioPlayerManager.player.positionStream,
+          stream: (globalAudioHandler as MyAudioHandler).player.positionStream,
           builder: (context, snapshot) {
             final position = snapshot.data ?? Duration.zero;
             final duration =
-                audioPlayerManager.player.duration ?? Duration.zero;
+                (globalAudioHandler as MyAudioHandler).player.duration ??
+                Duration.zero;
             return Column(
               children: [
                 SliderTheme(
@@ -525,7 +541,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                             ? duration.inMilliseconds.toDouble()
                             : 1,
                     onChanged: (value) {
-                      audioPlayerManager.player.seek(
+                      (globalAudioHandler as MyAudioHandler).player.seek(
                         Duration(milliseconds: value.toInt()),
                       );
                     },
@@ -568,25 +584,31 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 if (currentIndex > 0) {
                   setState(() {
                     currentIndex--;
-                     if(_isShuffled){
+                    if (_isShuffled) {
                       currentSong = shuffledList[currentIndex];
-                    }
-                    else{
-                    currentSong = songs[currentIndex];
+                    } else {
+                      currentSong = songs[currentIndex];
                     }
                   });
                   await _loadLyrics();
-                  await audioPlayerManager.playNewSong(currentSong.linkSong!);
-                  showMusicNotification(currentSong);
+                  // await audioPlayerManager.playNewSong(currentSong.linkSong!);
+                  final mediaItem = MediaItem(
+                    id: currentSong.linkSong!, // hoặc link bài nhạc
+                    title: currentSong.songName,
+                    artist: currentSong.artistName,
+                    artUri: Uri.parse(currentSong.songImage),
+                  );
+                  globalAudioHandler.addQueueItem(mediaItem);
+                  // await showMusicNotification(currentSong, audioPlayerManager);
                 } else {
                   // ✅ Nếu đang ở bài đầu → phát lại bài hiện tại
-                  audioPlayerManager.player.seek(Duration.zero);
-                  audioPlayerManager.player.play();
+                  (globalAudioHandler as MyAudioHandler).player.seek(Duration.zero);
+                  (globalAudioHandler as MyAudioHandler).player.play();
                 }
               },
             ),
             StreamBuilder<PlayerState>(
-              stream: audioPlayerManager.player.playerStateStream,
+              stream: (globalAudioHandler as MyAudioHandler).player.playerStateStream,
               builder: (context, snapshot) {
                 final playerState = snapshot.data;
                 final processingState = playerState?.processingState;
@@ -604,7 +626,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                     icon: const Icon(Icons.play_arrow, color: Colors.white),
                     iconSize: 64,
                     onPressed: () {
-                      audioPlayerManager.player.play();
+                      (globalAudioHandler as MyAudioHandler).player.play();
                       // MusicPlayerManager.resumeMusic();
                     },
                   );
@@ -613,7 +635,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                     icon: const Icon(Icons.pause, color: Colors.white),
                     iconSize: 64,
                     onPressed: () {
-                      audioPlayerManager.player.pause();
+                      (globalAudioHandler as MyAudioHandler).player.pause();
                       // MusicPlayerManager.pauseMusic();
                     },
                   );
@@ -627,20 +649,25 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 if (currentIndex < songs.length - 1) {
                   setState(() {
                     currentIndex++;
-                    if(_isShuffled){
+                    if (_isShuffled) {
                       currentSong = shuffledList[currentIndex];
-                    }
-                    else{
-                    currentSong = songs[currentIndex];
+                    } else {
+                      currentSong = songs[currentIndex];
                     }
                   });
                   await _loadLyrics();
-                  await audioPlayerManager.playNewSong(currentSong.linkSong!);
-                  showMusicNotification(currentSong);
+                  final mediaItem = MediaItem(
+                    id: currentSong.linkSong!, // hoặc link bài nhạc
+                    title: currentSong.songName,
+                    artist: currentSong.artistName,
+                    artUri: Uri.parse(currentSong.songImage),
+                  );
+                  globalAudioHandler.addQueueItem(mediaItem);
+                  // await showMusicNotification(currentSong, audioPlayerManager);
                 } else {
                   // ✅ Nếu đang ở bài đầu → phát lại bài hiện tại
-                  audioPlayerManager.player.seek(Duration.zero);
-                  audioPlayerManager.player.play();
+                  (globalAudioHandler as MyAudioHandler).player.seek(Duration.zero);
+                  (globalAudioHandler as MyAudioHandler).player.play();
                 }
               },
             ),
@@ -664,12 +691,11 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               onPressed: () {
                 setState(() {
                   _isShuffled = !_isShuffled;
-                  if(_isShuffled){
-                  shuffledList = List.from(songs);
-                  shuffledList.shuffle();
-                  currentIndex = shuffledList.indexOf(currentSong);
-                  }
-                  else{
+                  if (_isShuffled) {
+                    shuffledList = List.from(songs);
+                    shuffledList.shuffle();
+                    currentIndex = shuffledList.indexOf(currentSong);
+                  } else {
                     currentIndex = songs.indexOf(currentSong);
                   }
                 });
@@ -683,7 +709,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               onPressed: () {
                 setState(() {
                   _loopMode = _getNextLoopMode();
-                  audioPlayerManager.player.setLoopMode(_loopMode);
+                  (globalAudioHandler as MyAudioHandler).player.setLoopMode(_loopMode);
                 });
               },
             ),

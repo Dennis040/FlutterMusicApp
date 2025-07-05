@@ -1,5 +1,8 @@
 package com.example.flutter_music_app
 
-import io.flutter.embedding.android.FlutterActivity
 
-class MainActivity : FlutterActivity()
+import com.ryanheise.audioservice.AudioServiceActivity
+
+class MainActivity: AudioServiceActivity() {
+    // Không cần thêm gì khác, FlutterActivity sẽ tự động handle
+}
