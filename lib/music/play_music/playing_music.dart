@@ -602,13 +602,18 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                   // await showMusicNotification(currentSong, audioPlayerManager);
                 } else {
                   // ✅ Nếu đang ở bài đầu → phát lại bài hiện tại
-                  (globalAudioHandler as MyAudioHandler).player.seek(Duration.zero);
+                  (globalAudioHandler as MyAudioHandler).player.seek(
+                    Duration.zero,
+                  );
                   (globalAudioHandler as MyAudioHandler).player.play();
                 }
               },
             ),
             StreamBuilder<PlayerState>(
-              stream: (globalAudioHandler as MyAudioHandler).player.playerStateStream,
+              stream:
+                  (globalAudioHandler as MyAudioHandler)
+                      .player
+                      .playerStateStream,
               builder: (context, snapshot) {
                 final playerState = snapshot.data;
                 final processingState = playerState?.processingState;
@@ -666,7 +671,9 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                   // await showMusicNotification(currentSong, audioPlayerManager);
                 } else {
                   // ✅ Nếu đang ở bài đầu → phát lại bài hiện tại
-                  (globalAudioHandler as MyAudioHandler).player.seek(Duration.zero);
+                  (globalAudioHandler as MyAudioHandler).player.seek(
+                    Duration.zero,
+                  );
                   (globalAudioHandler as MyAudioHandler).player.play();
                 }
               },
@@ -709,7 +716,9 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               onPressed: () {
                 setState(() {
                   _loopMode = _getNextLoopMode();
-                  (globalAudioHandler as MyAudioHandler).player.setLoopMode(_loopMode);
+                  (globalAudioHandler as MyAudioHandler).player.setLoopMode(
+                    _loopMode,
+                  );
                 });
               },
             ),

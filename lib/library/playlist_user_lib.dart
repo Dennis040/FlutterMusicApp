@@ -48,10 +48,8 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
       context,
       MaterialPageRoute(
         builder:
-            (context) => PlayingMusicInterface(
-              songs: _songs!,
-              currentIndex: index,
-            ),
+            (context) =>
+                PlayingMusicInterface(songs: _songs!, currentIndex: index),
       ),
     );
   }
@@ -60,9 +58,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
     debugPrint("Starting API call...");
     try {
       final response = await http.get(
-        Uri.parse(
-          '${ip}PlaylistUsers/playlists/${widget.playlistID}/songs',
-        ),
+        Uri.parse('${ip}PlaylistUsers/playlists/${widget.playlistID}/songs'),
         //Uri.parse('http://192.168.29.101:5207/api/Songs'),
       );
 
@@ -126,7 +122,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                     if (index == 0) {
                       return _buildActionButtons();
                     }
-                    return _buildTrackItem(_songs![index - 1], index-1);
+                    return _buildTrackItem(_songs![index - 1], index - 1);
                   }, childCount: _songs!.length + 1),
                 ),
               ],
@@ -378,7 +374,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
         child: InkWell(
           onTap: () {
             HapticFeedback.lightImpact();
-            _playSong(song,index);
+            _playSong(song, index);
           },
           borderRadius: BorderRadius.circular(8),
           child: Container(

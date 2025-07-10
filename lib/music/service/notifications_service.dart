@@ -7,7 +7,6 @@ import 'package:flutter_music_app/model/song.dart';
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
-
 // Future<void> showMusicNotification(String title, String body) async {
 //   const AndroidNotificationDetails androidDetails =
 //       AndroidNotificationDetails(
@@ -30,13 +29,15 @@ final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 //     notificationDetails,
 //   );
 // }
-Future<void> showMusicNotification(Song song, AudioPlayerManager audioPlayerManager) async {
+Future<void> showMusicNotification(
+  Song song,
+  AudioPlayerManager audioPlayerManager,
+) async {
   final ByteArrayAndroidBitmap largeIcon = ByteArrayAndroidBitmap(
     await _getByteArrayFromUrl(song.songImage),
   );
   // Kiểm tra trạng thái player
   final bool isPlaying = audioPlayerManager.player.playing;
-
 
   final AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
     'music_channel_id',
@@ -50,7 +51,7 @@ Future<void> showMusicNotification(Song song, AudioPlayerManager audioPlayerMana
       htmlFormatContent: true,
       htmlFormatTitle: true,
     ),
-     actions: [
+    actions: [
       const AndroidNotificationAction(
         'previous',
         'Prev',
@@ -59,7 +60,9 @@ Future<void> showMusicNotification(Song song, AudioPlayerManager audioPlayerMana
       AndroidNotificationAction(
         isPlaying ? 'pause' : 'play',
         isPlaying ? 'Pause' : 'Play',
-        icon: DrawableResourceAndroidBitmap(isPlaying ? '@drawable/play' : '@drawable/pause'),
+        icon: DrawableResourceAndroidBitmap(
+          isPlaying ? '@drawable/play' : '@drawable/pause',
+        ),
       ),
       const AndroidNotificationAction(
         'next',
@@ -89,7 +92,12 @@ Future<Uint8List> _getByteArrayFromUrl(String url) async {
     throw Exception('Không tải được ảnh: $url');
   }
 }
-void initializeNotifications(List<Song> songList, int currentSongIndex, AudioPlayerManager audioPlayerManager) async {
+
+void initializeNotifications(
+  List<Song> songList,
+  int currentSongIndex,
+  AudioPlayerManager audioPlayerManager,
+) async {
   const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
   const initSettings = InitializationSettings(android: androidInit);
 
@@ -106,29 +114,44 @@ void initializeNotifications(List<Song> songList, int currentSongIndex, AudioPla
         case 'next':
           if (currentSongIndex < songList.length - 1) {
             currentSongIndex++;
-            await audioPlayerManager.playNewSong(songList[currentSongIndex].linkSong!);
+            await audioPlayerManager.playNewSong(
+              songList[currentSongIndex].linkSong!,
+            );
           }
           break;
         case 'previous':
           if (currentSongIndex > 0) {
             currentSongIndex--;
-            await audioPlayerManager.playNewSong(songList[currentSongIndex].linkSong!);
+            await audioPlayerManager.playNewSong(
+              songList[currentSongIndex].linkSong!,
+            );
           }
           break;
       }
-      await showMusicNotification(songList[currentSongIndex], audioPlayerManager);
+      await showMusicNotification(
+        songList[currentSongIndex],
+        audioPlayerManager,
+      );
     },
   );
 }
 
-void _playNext(List<Song> songList, int currentSongIndex, AudioPlayerManager audioPlayerManager) {
+void _playNext(
+  List<Song> songList,
+  int currentSongIndex,
+  AudioPlayerManager audioPlayerManager,
+) {
   if (currentSongIndex < songList.length - 1) {
     currentSongIndex++;
   }
   audioPlayerManager.playNewSong(songList[currentSongIndex].linkSong!);
 }
 
-void _playPrevious(List<Song> songList, int currentSongIndex, AudioPlayerManager audioPlayerManager) {
+void _playPrevious(
+  List<Song> songList,
+  int currentSongIndex,
+  AudioPlayerManager audioPlayerManager,
+) {
   if (currentSongIndex > 0) {
     currentSongIndex--;
   }
