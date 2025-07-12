@@ -1,4 +1,3 @@
-
 class Artist {
   final int artistId;
   final String artistName;

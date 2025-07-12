@@ -18,17 +18,18 @@ Future<void> requestNotificationPermission() async {
     debugPrint("Notification permission denied");
   }
 }
+
 late final AudioHandler globalAudioHandler;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   globalAudioHandler = await AudioService.init(
-  builder: () => MyAudioHandler(), // ✅ BẮT BUỘC
-  config: const AudioServiceConfig(
-    androidNotificationChannelId: 'com.example.app.channel.audio',
-    androidNotificationChannelName: 'Music Playback',
-    androidNotificationOngoing: true,
-  ),
-);
+    builder: () => MyAudioHandler(), // ✅ BẮT BUỘC
+    config: const AudioServiceConfig(
+      androidNotificationChannelId: 'com.example.app.channel.audio',
+      androidNotificationChannelName: 'Music Playback',
+      androidNotificationOngoing: true,
+    ),
+  );
 
   // await requestNotificationPermission();
 

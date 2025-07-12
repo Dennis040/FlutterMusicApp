@@ -10,10 +10,6 @@ class CreatePlaylistRequest {
   });
 
   Map<String, dynamic> toJson() {
-    return {
-      'name': name,
-      'userId': userId,
-      'songIds': songIds,
-    };
+    return {'name': name, 'userId': userId, 'songIds': songIds};
   }
 }
