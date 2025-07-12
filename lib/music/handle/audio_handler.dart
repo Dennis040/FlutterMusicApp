@@ -3,7 +3,8 @@ import 'package:just_audio/just_audio.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 
-class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
+// 🔑 QUAN TRỌNG: Bỏ SeekHandler để tắt hoàn toàn seek functionality
+class MyAudioHandler extends BaseAudioHandler with QueueHandler {
   final AudioPlayer player = AudioPlayer();
 
   MyAudioHandler() {
@@ -24,11 +25,8 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
             playing ? MediaControl.pause : MediaControl.play,
             MediaControl.skipToNext,
           ],
-          systemActions: {
-            // MediaAction.seek,
-            // MediaAction.seekForward,
-            // MediaAction.seekBackward,
-          },
+          // 🔑 QUAN TRỌNG: Để trống systemActions
+          systemActions: const <MediaAction>{},
           androidCompactActionIndices: const [0, 1, 2],
           processingState:
               const {
@@ -39,11 +37,9 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
                 ProcessingState.completed: AudioProcessingState.completed,
               }[state]!,
           playing: playing,
-          // updatePosition: player.position,
-          // bufferedPosition: player.bufferedPosition,
+          // 🔑 QUAN TRỌNG: KHÔNG SET bất kỳ position nào
           speed: player.speed,
           queueIndex: player.currentIndex,
-          // updateTime: DateTime.now(),
         ),
       );
     });
@@ -54,15 +50,16 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     try {
       await player.setAudioSource(AudioSource.uri(Uri.parse(mediaItem.id)));
 
-      //  Lấy duration thật từ just_audio sau khi load xong
-      // final duration = player.duration;
-
-      //  Tạo MediaItem mới có duration
-      // final updatedMediaItem = mediaItem.copyWith(duration: duration);
-
-      // ⚠️ Loại bỏ duration để ẩn seekbar trên notification
-      final noDurationMediaItem = mediaItem.copyWith(duration: null);
-      //  Cập nhật queue & mediaItem để notification nhận biết đúng thông tin
+      // 🔑 QUAN TRỌNG: Tạo MediaItem KHÔNG có duration
+      final noDurationMediaItem = MediaItem(
+        id: mediaItem.id,
+        title: mediaItem.title,
+        artist: mediaItem.artist,
+        artUri: mediaItem.artUri,
+        // 🔑 KHÔNG SET duration
+        // duration: null, // Thậm chí không cần set null
+      );
+      
       queue.value = [noDurationMediaItem];
       this.mediaItem.add(noDurationMediaItem);
 
@@ -86,4 +83,7 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
 
   @override
   Future<void> skipToPrevious() async => player.seekToPrevious();
+
+  // 🔑 QUAN TRỌNG: KHÔNG implement seek methods
+  // Nếu bạn extends SeekHandler, hãy bỏ nó đi
 }
