@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_music_app/screens/profile/edit_profile_screen.dart';
+import 'package:flutter_music_app/screens/profile/notification_screen.dart';
+import 'package:flutter_music_app/screens/profile/privacy_setting_screen.dart';
+import 'package:flutter_music_app/screens/profile/support_screen.dart';
+import 'package:flutter_music_app/screens/auth/start_screen.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -18,7 +23,7 @@ class ProfileTab extends StatelessWidget {
             title: const Text(
               'Profile',
               style: TextStyle(
-                fontSize: 24, 
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
@@ -46,45 +51,52 @@ class ProfileTab extends StatelessWidget {
                   const Text(
                     'User Name',
                     style: TextStyle(
-                      fontSize: 28, 
+                      fontSize: 28,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  
+
                   // Badge Premium/Member
                   _buildMembershipBadge(),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Nút upgrade premium cho member
                   if (!isPremium) _buildUpgradeButton(),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Stats
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[900],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildStatColumn('12', 'Playlists'),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
+                  // Container(
+                  //   padding: const EdgeInsets.all(16),
+                  //   decoration: BoxDecoration(
+                  //     color: Colors.grey[900],
+                  //     borderRadius: BorderRadius.circular(12),
+                  //   ),
+                  //   child: Row(
+                  //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  //     children: [
+                  //       _buildStatColumn('12', 'Playlists'),
+                  //     ],
+                  //   ),
+                  // ),
+
+                  // const SizedBox(height: 32),
+
                   // Menu options
                   _buildMenuTile(
                     icon: Icons.person_outline,
                     title: 'Edit Profile',
-                    onTap: () {},
+                    onTap: () {
+                       Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EditProfileScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuTile(
                     icon: Icons.download_outlined,
@@ -94,26 +106,56 @@ class ProfileTab extends StatelessWidget {
                   _buildMenuTile(
                     icon: Icons.notifications_outlined,
                     title: 'Notifications',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationsScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuTile(
                     icon: Icons.privacy_tip_outlined,
                     title: 'Privacy Settings',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PrivacySettingsScreen(),
+                        ),
+                      );
+                    },
                   ),
                   _buildMenuTile(
                     icon: Icons.help_outline,
                     title: 'Support',
-                    onTap: () {},
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SupportScreen(),
+                        ),
+                      );
+                    },
                   ),
-                  
+
                   const SizedBox(height: 32),
-                  
+
                   // Log out button
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        // Navigate to start screen and clear navigation stack
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const StartScreen(),
+                          ),
+                          (route) => false, // Remove all previous routes
+                        );
+                      },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.white54),
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -131,7 +173,7 @@ class ProfileTab extends StatelessWidget {
                       ),
                     ),
                   ),
-                  
+
                   const SizedBox(height: 20),
                 ],
               ),
@@ -197,11 +239,7 @@ class ProfileTab extends StatelessWidget {
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.star,
-              color: Colors.black,
-              size: 20,
-            ),
+            Icon(Icons.star, color: Colors.black, size: 20),
             SizedBox(width: 8),
             Text(
               'Get Premium',
@@ -223,18 +261,15 @@ class ProfileTab extends StatelessWidget {
         Text(
           count,
           style: const TextStyle(
-            fontSize: 20, 
+            fontSize: 20,
             fontWeight: FontWeight.bold,
             color: Colors.white,
           ),
         ),
         const SizedBox(height: 4),
         Text(
-          label, 
-          style: const TextStyle(
-            color: Colors.white54,
-            fontSize: 12,
-          ),
+          label,
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
         ),
       ],
     );
@@ -249,15 +284,9 @@ class ProfileTab extends StatelessWidget {
       leading: Icon(icon, color: Colors.white),
       title: Text(
         title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-        ),
+        style: const TextStyle(color: Colors.white, fontSize: 16),
       ),
-      trailing: const Icon(
-        Icons.chevron_right,
-        color: Colors.white54,
-      ),
+      trailing: const Icon(Icons.chevron_right, color: Colors.white54),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
     );
