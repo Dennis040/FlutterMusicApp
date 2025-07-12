@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_music_app/screens/profile/edit_profile_screen.dart';
+import 'package:flutter_music_app/screens/profile/get_premium_screen.dart';
 import 'package:flutter_music_app/screens/profile/notification_screen.dart';
+import 'package:flutter_music_app/screens/profile/payment_screen.dart';
 import 'package:flutter_music_app/screens/profile/privacy_setting_screen.dart';
 import 'package:flutter_music_app/screens/profile/support_screen.dart';
 import 'package:flutter_music_app/screens/auth/start_screen.dart';
@@ -64,7 +66,7 @@ class ProfileTab extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   // Nút upgrade premium cho member
-                  if (!isPremium) _buildUpgradeButton(),
+                  if (!isPremium) _buildUpgradeButton(context),
 
                   const SizedBox(height: 24),
 
@@ -90,7 +92,7 @@ class ProfileTab extends StatelessWidget {
                     icon: Icons.person_outline,
                     title: 'Edit Profile',
                     onTap: () {
-                       Navigator.push(
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const EditProfileScreen(),
@@ -213,7 +215,7 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _buildUpgradeButton() {
+  Widget _buildUpgradeButton(BuildContext context) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -227,6 +229,10 @@ class ProfileTab extends StatelessWidget {
       child: ElevatedButton(
         onPressed: () {
           // Navigate to premium subscription page
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PaymentPage()),
+          );
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.transparent,

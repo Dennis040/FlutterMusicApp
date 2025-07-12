@@ -27,7 +27,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
@@ -45,6 +45,23 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="demozpdk"
+                    android:host="app" />
+            </intent-filter>
+
+            <meta-data
+                android:name="com.vng.zalo.sdk.APP_ID"
+                android:value="2553" />
+            <meta-data
+                android:name="com.vng.zalo.sdk.URI_SCHEME"
+                android:value="demozpdk://app" />
+            <meta-data
+                android:name="com.vng.zalo.sdk.ENVIRONMENT"
+                android:value="SANDBOX" />
         </activity>
 
         <!-- AudioService configuration - QUAN TRỌNG -->

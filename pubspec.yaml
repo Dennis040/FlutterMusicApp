@@ -52,6 +52,7 @@ dependencies:
   get: ^4.6.5
   cached_network_image: ^3.2.3
   get_it: ^8.0.3
+  flutter_zalopay_sdk: ^0.1.14
 
 dev_dependencies:
   flutter_test:
