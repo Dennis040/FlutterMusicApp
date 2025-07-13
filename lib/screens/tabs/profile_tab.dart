@@ -1,19 +1,81 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_music_app/screens/profile/edit_profile_screen.dart';
-import 'package:flutter_music_app/screens/profile/get_premium_screen.dart';
 import 'package:flutter_music_app/screens/profile/notification_screen.dart';
 import 'package:flutter_music_app/screens/profile/payment_screen.dart';
 import 'package:flutter_music_app/screens/profile/privacy_setting_screen.dart';
 import 'package:flutter_music_app/screens/profile/support_screen.dart';
 import 'package:flutter_music_app/screens/auth/start_screen.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import '../../config/config.dart';
 
-class ProfileTab extends StatelessWidget {
+class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
 
-  // Giả lập trạng thái người dùng - có thể lấy từ state management
-  final bool isPremium = false; // Đổi thành true để test premium
+  @override
+  State<ProfileTab> createState() => _ProfileTabState();
+}
+
+class _ProfileTabState extends State<ProfileTab> {
+  // Giả lập trạng thái người dùng - sau này có thể fetch từ server hoặc provider
+  bool isPremium = false;
+  String _username = '';
+  String _role = '';
 
   @override
+  void initState() {
+    super.initState();
+    fetchUserProfile();
+  }
+
+  Future<int?> getUserIdFromToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('accessToken');
+
+    if (token == null || JwtDecoder.isExpired(token)) return null;
+
+    Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+
+    // Dựa theo cách bạn tạo token bằng ClaimTypes.NameIdentifier:
+    // => nó sẽ lưu trong key "nameid"
+    final userId = decodedToken['nameid']; // hoặc 'sub' nếu bạn đổi claim
+
+    return int.tryParse(userId.toString());
+  }
+
+  Future<void> fetchUserProfile() async {
+    final userId = await getUserIdFromToken();
+    debugPrint('UserId: $userId');
+
+    final response = await http.get(Uri.parse('${ip}Users/$userId'));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      final String username = data['username'];
+      final String role = data['role'];
+
+      debugPrint('Username: $username');
+      debugPrint('Role: $role');
+
+      // Gán vào biến state nếu muốn hiển thị ra giao diện
+      if (mounted) {
+        setState(() {
+          _username = username;
+          _role = role;
+          isPremium = (_role == 'premium');
+          debugPrint('isPremium: $isPremium');
+        });
+      }
+    } else {
+      debugPrint('Error fetching profile: ${response.statusCode}');
+    }
+  }
+
+  @override 
   Widget build(BuildContext context) {
     return Container(
       color: Colors.black,
@@ -42,7 +104,6 @@ class ProfileTab extends StatelessWidget {
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
-                  // Avatar và thông tin cơ bản
                   const CircleAvatar(
                     radius: 60,
                     backgroundImage: NetworkImage(
@@ -50,8 +111,8 @@ class ProfileTab extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Text(
-                    'User Name',
+                  Text(
+                    _username,
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -60,34 +121,14 @@ class ProfileTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
 
-                  // Badge Premium/Member
                   _buildMembershipBadge(),
 
                   const SizedBox(height: 24),
 
-                  // Nút upgrade premium cho member
                   if (!isPremium) _buildUpgradeButton(context),
 
                   const SizedBox(height: 24),
 
-                  // Stats
-                  // Container(
-                  //   padding: const EdgeInsets.all(16),
-                  //   decoration: BoxDecoration(
-                  //     color: Colors.grey[900],
-                  //     borderRadius: BorderRadius.circular(12),
-                  //   ),
-                  //   child: Row(
-                  //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  //     children: [
-                  //       _buildStatColumn('12', 'Playlists'),
-                  //     ],
-                  //   ),
-                  // ),
-
-                  // const SizedBox(height: 32),
-
-                  // Menu options
                   _buildMenuTile(
                     icon: Icons.person_outline,
                     title: 'Edit Profile',
@@ -144,18 +185,16 @@ class ProfileTab extends StatelessWidget {
 
                   const SizedBox(height: 32),
 
-                  // Log out button
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        // Navigate to start screen and clear navigation stack
                         Navigator.pushAndRemoveUntil(
                           context,
                           MaterialPageRoute(
                             builder: (context) => const StartScreen(),
                           ),
-                          (route) => false, // Remove all previous routes
+                          (route) => false,
                         );
                       },
                       style: OutlinedButton.styleFrom(
@@ -228,7 +267,6 @@ class ProfileTab extends StatelessWidget {
       ),
       child: ElevatedButton(
         onPressed: () {
-          // Navigate to premium subscription page
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const PaymentPage()),
@@ -258,26 +296,6 @@ class ProfileTab extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildStatColumn(String count, String label) {
-    return Column(
-      children: [
-        Text(
-          count,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white54, fontSize: 12),
-        ),
-      ],
     );
   }
 
