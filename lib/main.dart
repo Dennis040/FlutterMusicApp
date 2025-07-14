@@ -2,6 +2,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_music_app/music/handle/audio_handler.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:page_transition/page_transition.dart';
 import 'constants/app_colors.dart';
 import 'screens/auth/start_screen.dart';
@@ -22,6 +23,13 @@ Future<void> requestNotificationPermission() async {
 late final AudioHandler globalAudioHandler;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // ⚠️ Thêm test device ID tại đây
+  final requestConfiguration = RequestConfiguration(
+    testDeviceIds: ['0BB05E7669CCD3603D56D08166983789'],
+  );
+  MobileAds.instance.updateRequestConfiguration(requestConfiguration);
+
+  await MobileAds.instance.initialize();
   globalAudioHandler = await AudioService.init(
     builder: () => MyAudioHandler(), // ✅ BẮT BUỘC
     config: const AudioServiceConfig(

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_music_app/config/config.dart';
 import 'package:flutter_music_app/main.dart';
 import 'package:flutter_music_app/music/handle/audio_handler.dart';
+import 'package:flutter_music_app/music/service/admanager.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:palette_generator/palette_generator.dart';
@@ -57,9 +58,10 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   StreamSubscription<PlayerState>? _playerStateSub;
   StreamSubscription<MediaItem?>? _mediaItemSub;
   bool isPremium = false;
-  int _songPlayCount = 0;
-  bool _isShowingAd = false;
-  Timer? _adTimer;
+  // int _songPlayCount = 0;
+  // bool _isShowingAd = false;
+  // Timer? _adTimer;
+  final adManager = AdManager()..loadAd();
 
   @override
   void initState() {
@@ -95,6 +97,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     // globalAudioHandler.addQueueItem(mediaItem);
     _setupNotificationCallbacks();
     fetchUserProfile();
+    _checkAndShowAd();
   }
 
   Future<int?> getUserIdFromToken() async {
@@ -144,7 +147,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     _imageAnimationController.dispose();
     _playerStateSub?.cancel();
     _mediaItemSub?.cancel();
-    _adTimer?.cancel();
+    // _adTimer?.cancel();
     super.dispose();
   }
 
@@ -186,41 +189,41 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   // Hàm kiểm tra và hiển thị quảng cáo
-  void _checkAndShowAd() {
-    if (!isPremium) {
-      _songPlayCount++;
-      debugPrint('Song play count: $_songPlayCount');
-
-      // Hiển thị quảng cáo sau mỗi 3 bài hát
-      if (_songPlayCount % 3 == 0) {
-        _showInterstitialAd();
-      }
+  Future<void> _checkAndShowAd() async {
+    if (isPremium == false) {
+      await adManager.showAdIfNeeded(() async {
+        debugPrint("📢 QUẢNG CÁO XONG → PHÁT NHẠC");
+        (globalAudioHandler as MyAudioHandler).player.play();
+      });
+    } else {
+       debugPrint("⭐ PREMIUM → PHÁT LUÔN");
+      (globalAudioHandler as MyAudioHandler).player.play();
     }
   }
 
-  void _showInterstitialAd() {
-    setState(() {
-      _isShowingAd = true;
-    });
+  // void _showInterstitialAd() {
+  //   setState(() {
+  //     _isShowingAd = true;
+  //   });
 
-    // Tạm dừng nhạc khi hiển thị quảng cáo
-    (globalAudioHandler as MyAudioHandler).player.pause();
+  //   // Tạm dừng nhạc khi hiển thị quảng cáo
+  //   (globalAudioHandler as MyAudioHandler).player.pause();
 
-    // Tự động đóng quảng cáo sau 5 giây (hoặc có thể để user tự đóng)
-    _adTimer = Timer(const Duration(seconds: 5), () {
-      _hideAd();
-    });
-  }
+  //   // Tự động đóng quảng cáo sau 5 giây (hoặc có thể để user tự đóng)
+  //   _adTimer = Timer(const Duration(seconds: 5), () {
+  //     _hideAd();
+  //   });
+  // }
 
-  void _hideAd() {
-    setState(() {
-      _isShowingAd = false;
-    });
-    _adTimer?.cancel();
+  // void _hideAd() {
+  //   setState(() {
+  //     _isShowingAd = false;
+  //   });
+  //   _adTimer?.cancel();
 
-    // Tiếp tục phát nhạc sau khi đóng quảng cáo
-    (globalAudioHandler as MyAudioHandler).player.play();
-  }
+  //   // Tiếp tục phát nhạc sau khi đóng quảng cáo
+  //   (globalAudioHandler as MyAudioHandler).player.play();
+  // }
 
   Future<void> _initPlayer() async {
     // await audioPlayerManager.init(); // Đợi nhạc load xong
@@ -282,7 +285,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             _isShuffled ? shuffledList[currentIndex] : songs[currentIndex];
       });
       await _playSong(currentSong);
-      _checkAndShowAd();
+      // _checkAndShowAd();
     } else if (_loopMode == LoopMode.all) {
       setState(() {
         currentIndex = 0;
@@ -290,7 +293,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             _isShuffled ? shuffledList[currentIndex] : songs[currentIndex];
       });
       await _playSong(currentSong);
-      _checkAndShowAd();
+      // _checkAndShowAd();
     }
   }
 
@@ -302,7 +305,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             _isShuffled ? shuffledList[currentIndex] : songs[currentIndex];
       });
       await _playSong(currentSong);
-      _checkAndShowAd();
+      // _checkAndShowAd();
     } else {
       // Seek to beginning
       await (globalAudioHandler as MyAudioHandler).player.seek(Duration.zero);
@@ -440,6 +443,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
           (position >= _lyrics!.lines[i].timestamp &&
               position < _lyrics!.lines[i + 1].timestamp)) {
         if (_currentLyricIndex != i) {
+          if (!mounted) return;
           setState(() {
             _currentLyricIndex = i;
           });
@@ -475,82 +479,82 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     );
   }
 
-  Widget _buildAdOverlay() {
-    return Container(
-      color: Colors.black.withOpacity(0.9),
-      child: Center(
-        child: Container(
-          margin: const EdgeInsets.all(20),
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.ads_click, size: 64, color: Colors.blue),
-              const SizedBox(height: 16),
-              const Text(
-                'Quảng cáo',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Nâng cấp lên Premium để loại bỏ quảng cáo!',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.grey),
-              ),
-              const SizedBox(height: 20),
-              // Có thể thêm banner quảng cáo thật ở đây
-              Container(
-                height: 100,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Colors.blue, Colors.purple],
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Center(
-                  child: Text(
-                    'Quảng cáo của bạn ở đây',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton(onPressed: _hideAd, child: const Text('Đóng')),
-                  ElevatedButton(
-                    onPressed: () {
-                      // TODO: Implement upgrade to premium
-                      _hideAd();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: const Text('Nâng cấp Premium'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  // Widget _buildAdOverlay() {
+  //   return Container(
+  //     color: Colors.black.withOpacity(0.9),
+  //     child: Center(
+  //       child: Container(
+  //         margin: const EdgeInsets.all(20),
+  //         padding: const EdgeInsets.all(20),
+  //         decoration: BoxDecoration(
+  //           color: Colors.white,
+  //           borderRadius: BorderRadius.circular(12),
+  //         ),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             const Icon(Icons.ads_click, size: 64, color: Colors.blue),
+  //             const SizedBox(height: 16),
+  //             const Text(
+  //               'Quảng cáo',
+  //               style: TextStyle(
+  //                 fontSize: 24,
+  //                 fontWeight: FontWeight.bold,
+  //                 color: Colors.black,
+  //               ),
+  //             ),
+  //             const SizedBox(height: 8),
+  //             const Text(
+  //               'Nâng cấp lên Premium để loại bỏ quảng cáo!',
+  //               textAlign: TextAlign.center,
+  //               style: TextStyle(fontSize: 16, color: Colors.grey),
+  //             ),
+  //             const SizedBox(height: 20),
+  //             // Có thể thêm banner quảng cáo thật ở đây
+  //             Container(
+  //               height: 100,
+  //               width: double.infinity,
+  //               decoration: BoxDecoration(
+  //                 gradient: const LinearGradient(
+  //                   colors: [Colors.blue, Colors.purple],
+  //                 ),
+  //                 borderRadius: BorderRadius.circular(8),
+  //               ),
+  //               child: const Center(
+  //                 child: Text(
+  //                   'Quảng cáo của bạn ở đây',
+  //                   style: TextStyle(
+  //                     color: Colors.white,
+  //                     fontSize: 16,
+  //                     fontWeight: FontWeight.bold,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //             const SizedBox(height: 20),
+  //             Row(
+  //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+  //               children: [
+  //                 ElevatedButton(onPressed: _hideAd, child: const Text('Đóng')),
+  //                 ElevatedButton(
+  //                   onPressed: () {
+  //                     // TODO: Implement upgrade to premium
+  //                     _hideAd();
+  //                   },
+  //                   style: ElevatedButton.styleFrom(
+  //                     backgroundColor: Colors.blue,
+  //                     foregroundColor: Colors.white,
+  //                   ),
+  //                   child: const Text('Nâng cấp Premium'),
+  //                 ),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -600,7 +604,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               ],
             ),
             // Overlay quảng cáo
-            if (_isShowingAd) _buildAdOverlay(),
+            // if (_isShowingAd) _buildAdOverlay(),
           ],
         ),
       ),
@@ -862,7 +866,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                   );
                   globalAudioHandler.addQueueItem(mediaItem);
                   // await showMusicNotification(currentSong, audioPlayerManager);
-                  _checkAndShowAd();
+                  // _checkAndShowAd();
                 } else {
                   // ✅ Nếu đang ở bài đầu → phát lại bài hiện tại
                   (globalAudioHandler as MyAudioHandler).player.seek(
@@ -931,7 +935,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                     artUri: Uri.parse(currentSong.songImage),
                   );
                   globalAudioHandler.addQueueItem(mediaItem);
-                  _checkAndShowAd();
+                  // _checkAndShowAd();
                   // await showMusicNotification(currentSong, audioPlayerManager);
                 } else {
                   // ✅ Nếu đang ở bài đầu → phát lại bài hiện tại

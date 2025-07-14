@@ -156,7 +156,7 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       // Update current media item
       this.mediaItem.add(mediaItem);
 
-      await player.play();
+      // await player.play();
     } catch (e) {
       debugPrint("Lỗi khi phát bài hát: $e");
     }

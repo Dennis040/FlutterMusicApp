@@ -6,7 +6,6 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'dart:convert';
 import '../../config/config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../config/config.dart';
 
 class PaymentPage extends StatefulWidget {
   const PaymentPage({super.key});

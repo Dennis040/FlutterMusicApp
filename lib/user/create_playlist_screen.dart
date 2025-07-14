@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../model/song.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import '../../config/config.dart';
 
 class CreatePlaylistScreen extends StatefulWidget {
   const CreatePlaylistScreen({super.key});
@@ -63,7 +64,7 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
 
   Future<bool> createPlaylist(CreatePlaylistRequest request) async {
     final url = Uri.parse(
-      'http://10.0.2.2:5207/api/PlaylistUsers/CreateWithSongs',
+      '${ip}PlaylistUsers/CreateWithSongs',
     );
 
     final response = await http.post(
@@ -79,7 +80,7 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
     debugPrint("Starting API call...");
     try {
       final response = await http.get(
-        Uri.parse('http://10.0.2.2:5207/api/Songs'),
+        Uri.parse('${ip}Songs'),
         //Uri.parse('http://192.168.29.101:5207/api/Songs'),
       );
 
