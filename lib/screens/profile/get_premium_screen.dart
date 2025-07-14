@@ -17,7 +17,9 @@ class GetPremiumPage extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.greenAccent[400],
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(30),
+            ),
           ),
           onPressed: () {
             Navigator.push(

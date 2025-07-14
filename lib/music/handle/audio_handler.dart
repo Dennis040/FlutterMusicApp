@@ -5,17 +5,17 @@ import 'package:flutter/foundation.dart';
 
 class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   final AudioPlayer player = AudioPlayer();
-  
+
   // Callback functions để giao tiếp với UI
   VoidCallback? onNext;
   VoidCallback? onPrevious;
   VoidCallback? onShuffle;
   VoidCallback? onRepeat;
-  
+
   // State variables
   bool _isShuffled = false;
   LoopMode _loopMode = LoopMode.off;
-  
+
   MyAudioHandler() {
     _init();
   }
@@ -106,7 +106,10 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         bufferedPosition: bufferedPosition,
         speed: speed,
         queueIndex: currentIndex,
-        shuffleMode: _isShuffled ? AudioServiceShuffleMode.all : AudioServiceShuffleMode.none,
+        shuffleMode:
+            _isShuffled
+                ? AudioServiceShuffleMode.all
+                : AudioServiceShuffleMode.none,
         repeatMode: _mapRepeatMode(_loopMode),
       ),
     );
@@ -148,11 +151,11 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       );
 
       await player.setAudioSource(audioSource);
-      
+
       // Update queue
       final newQueue = List<MediaItem>.from(queue.value)..add(mediaItem);
       queue.add(newQueue);
-      
+
       // Update current media item
       this.mediaItem.add(mediaItem);
 
@@ -165,9 +168,10 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   @override
   Future<void> addQueueItems(List<MediaItem> mediaItems) async {
     try {
-      final audioSources = mediaItems.map((item) => 
-        AudioSource.uri(Uri.parse(item.id), tag: item)
-      ).toList();
+      final audioSources =
+          mediaItems
+              .map((item) => AudioSource.uri(Uri.parse(item.id), tag: item))
+              .toList();
 
       await player.setAudioSource(
         ConcatenatingAudioSource(children: audioSources),
@@ -186,9 +190,10 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
   @override
   Future<void> removeQueueItemAt(int index) async {
     if (player.audioSource is ConcatenatingAudioSource) {
-      final concatenatingAudioSource = player.audioSource as ConcatenatingAudioSource;
+      final concatenatingAudioSource =
+          player.audioSource as ConcatenatingAudioSource;
       await concatenatingAudioSource.removeAt(index);
-      
+
       final newQueue = List<MediaItem>.from(queue.value)..removeAt(index);
       queue.add(newQueue);
     }
@@ -266,7 +271,7 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
         _loopMode = LoopMode.all;
         break;
     }
-    
+
     await player.setLoopMode(_loopMode);
     if (onRepeat != null) {
       onRepeat!();

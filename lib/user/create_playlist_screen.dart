@@ -63,9 +63,7 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
   }
 
   Future<bool> createPlaylist(CreatePlaylistRequest request) async {
-    final url = Uri.parse(
-      '${ip}PlaylistUsers/CreateWithSongs',
-    );
+    final url = Uri.parse('${ip}PlaylistUsers/CreateWithSongs');
 
     final response = await http.post(
       url,

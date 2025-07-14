@@ -53,7 +53,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.notifications, color: Colors.white, size: 24),
+                    const Icon(
+                      Icons.notifications,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                     const SizedBox(width: 12),
                     const Expanded(
                       child: Column(
@@ -124,7 +128,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 title: 'Weekly Recommendations',
                 subtitle: 'Personalized music suggestions',
                 value: weeklyRecommendations,
-                onChanged: (value) => setState(() => weeklyRecommendations = value),
+                onChanged:
+                    (value) => setState(() => weeklyRecommendations = value),
               ),
               _buildNotificationTile(
                 icon: Icons.podcasts,
@@ -206,10 +211,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     const SizedBox(height: 8),
                     const Text(
                       'No notifications during these hours',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -264,10 +266,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
                 ),
               ],
             ),
@@ -291,16 +290,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       style: OutlinedButton.styleFrom(
         side: const BorderSide(color: Colors.white54),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
       child: Text(
         text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 12,
-        ),
+        style: const TextStyle(color: Colors.white, fontSize: 12),
       ),
     );
   }

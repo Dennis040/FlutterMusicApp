@@ -59,14 +59,16 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 title: 'Public Playlists',
                 subtitle: 'Allow others to see your playlists',
                 value: showPublicPlaylists,
-                onChanged: (value) => setState(() => showPublicPlaylists = value),
+                onChanged:
+                    (value) => setState(() => showPublicPlaylists = value),
               ),
               _buildPrivacyTile(
                 icon: Icons.headphones,
                 title: 'Listening Activity',
                 subtitle: 'Show what you\'re listening to',
                 value: showListeningActivity,
-                onChanged: (value) => setState(() => showListeningActivity = value),
+                onChanged:
+                    (value) => setState(() => showListeningActivity = value),
               ),
 
               const SizedBox(height: 24),
@@ -85,7 +87,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 title: 'Social Recommendations',
                 subtitle: 'Get recommendations based on friends\' activity',
                 value: allowRecommendations,
-                onChanged: (value) => setState(() => allowRecommendations = value),
+                onChanged:
+                    (value) => setState(() => allowRecommendations = value),
               ),
 
               const SizedBox(height: 24),
@@ -97,7 +100,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 title: 'Data Collection',
                 subtitle: 'Help improve the app with usage data',
                 value: allowDataCollection,
-                onChanged: (value) => setState(() => allowDataCollection = value),
+                onChanged:
+                    (value) => setState(() => allowDataCollection = value),
               ),
               _buildPrivacyTile(
                 icon: Icons.location_on,
@@ -228,10 +232,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.white54, fontSize: 12),
                 ),
               ],
             ),
@@ -276,15 +277,9 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(
-            color: Colors.white54,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
         ),
-        trailing: const Icon(
-          Icons.chevron_right,
-          color: Colors.white54,
-        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
         onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
@@ -309,11 +304,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(
-              Icons.open_in_new,
-              color: Colors.white54,
-              size: 14,
-            ),
+            const Icon(Icons.open_in_new, color: Colors.white54, size: 14),
           ],
         ),
       ),
@@ -323,72 +314,72 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
   void _showDataDownloadDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Download Your Data',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'We\'ll prepare a file with your personal data and send it to your email within 30 days.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Process data download request
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1DB954),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.grey[900],
+            title: const Text(
+              'Download Your Data',
+              style: TextStyle(color: Colors.white),
             ),
-            child: const Text(
-              'Request Data',
-              style: TextStyle(color: Colors.black),
+            content: const Text(
+              'We\'ll prepare a file with your personal data and send it to your email within 30 days.',
+              style: TextStyle(color: Colors.white70),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Process data download request
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1DB954),
+                ),
+                child: const Text(
+                  'Request Data',
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _showDeleteAccountDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Delete Account',
-          style: TextStyle(color: Colors.red),
-        ),
-        content: const Text(
-          'This action cannot be undone. All your data, playlists, and account information will be permanently deleted.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Process account deletion
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text(
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.grey[900],
+            title: const Text(
               'Delete Account',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: Colors.red),
             ),
+            content: const Text(
+              'This action cannot be undone. All your data, playlists, and account information will be permanently deleted.',
+              style: TextStyle(color: Colors.white70),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Process account deletion
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text(
+                  'Delete Account',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

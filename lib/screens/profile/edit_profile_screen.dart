@@ -26,7 +26,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void initState() {
     super.initState();
     _loadUserData();
-    
+
     // Listen for changes
     _usernameController.addListener(_onFieldChanged);
     _emailController.addListener(_onFieldChanged);
@@ -84,23 +84,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           if (_hasChanges)
             TextButton(
               onPressed: _isLoading ? null : _saveChanges,
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1DB954)),
+              child:
+                  _isLoading
+                      ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFF1DB954),
+                          ),
+                        ),
+                      )
+                      : const Text(
+                        'Save',
+                        style: TextStyle(
+                          color: Color(0xFF1DB954),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    )
-                  : const Text(
-                      'Save',
-                      style: TextStyle(
-                        color: Color(0xFF1DB954),
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
             ),
         ],
       ),
@@ -197,7 +200,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Email is required';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
                       return 'Please enter a valid email';
                     }
                     return null;
@@ -211,10 +216,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 8),
                 const Text(
                   'Leave blank if you don\'t want to change your password',
-                  style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
                 ),
                 const SizedBox(height: 16),
 
@@ -228,7 +230,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     });
                   },
                   validator: (value) {
-                    if (_newPasswordController.text.isNotEmpty && 
+                    if (_newPasswordController.text.isNotEmpty &&
                         (value == null || value.isEmpty)) {
                       return 'Current password is required to change password';
                     }
@@ -252,7 +254,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       if (value.length < 8) {
                         return 'Password must be at least 8 characters';
                       }
-                      if (!RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)').hasMatch(value)) {
+                      if (!RegExp(
+                        r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)',
+                      ).hasMatch(value)) {
                         return 'Password must contain uppercase, lowercase, and number';
                       }
                     }
@@ -319,23 +323,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           borderRadius: BorderRadius.circular(25),
                         ),
                       ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                      child:
+                          _isLoading
+                              ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.black,
+                                  ),
+                                ),
+                              )
+                              : const Text(
+                                'Save Changes',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
                               ),
-                            )
-                          : const Text(
-                              'Save Changes',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
                     ),
                   ),
 
@@ -471,15 +478,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(
-            color: Colors.white54,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
         ),
-        trailing: const Icon(
-          Icons.chevron_right,
-          color: Colors.white54,
-        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
         onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
@@ -493,47 +494,57 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Change Profile Picture',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+      builder:
+          (context) => Container(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Change Profile Picture',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: const Icon(Icons.camera_alt, color: Colors.white),
+                  title: const Text(
+                    'Camera',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Handle camera
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library, color: Colors.white),
+                  title: const Text(
+                    'Gallery',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Handle gallery
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.delete, color: Colors.red),
+                  title: const Text(
+                    'Remove Photo',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    // Handle remove
+                  },
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.camera_alt, color: Colors.white),
-              title: const Text('Camera', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Navigator.pop(context);
-                // Handle camera
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library, color: Colors.white),
-              title: const Text('Gallery', style: TextStyle(color: Colors.white)),
-              onTap: () {
-                Navigator.pop(context);
-                // Handle gallery
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete, color: Colors.red),
-              title: const Text('Remove Photo', style: TextStyle(color: Colors.red)),
-              onTap: () {
-                Navigator.pop(context);
-                // Handle remove
-              },
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -541,46 +552,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (_hasChanges) {
       showDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: Colors.grey[900],
-          title: const Text(
-            'Unsaved Changes',
-            style: TextStyle(color: Colors.white),
-          ),
-          content: const Text(
-            'You have unsaved changes. Do you want to save them before leaving?',
-            style: TextStyle(color: Colors.white70),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'Discard',
-                style: TextStyle(color: Colors.red),
+        builder:
+            (context) => AlertDialog(
+              backgroundColor: Colors.grey[900],
+              title: const Text(
+                'Unsaved Changes',
+                style: TextStyle(color: Colors.white),
               ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _saveChanges();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1DB954),
+              content: const Text(
+                'You have unsaved changes. Do you want to save them before leaving?',
+                style: TextStyle(color: Colors.white70),
               ),
-              child: const Text(
-                'Save',
-                style: TextStyle(color: Colors.black),
-              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    'Discard',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _saveChanges();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1DB954),
+                  ),
+                  child: const Text(
+                    'Save',
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
       );
     } else {
       Navigator.pop(context);
@@ -599,7 +611,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       // Simulate API call
       await Future.delayed(const Duration(seconds: 2));
-      
+
       // Show success message
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -608,7 +620,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             backgroundColor: Color(0xFF1DB954),
           ),
         );
-        
+
         setState(() {
           _hasChanges = false;
         });
@@ -634,72 +646,72 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _showSignOutDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Sign Out',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'Are you sure you want to sign out?',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Handle sign out
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1DB954),
-            ),
-            child: const Text(
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.grey[900],
+            title: const Text(
               'Sign Out',
-              style: TextStyle(color: Colors.black),
+              style: TextStyle(color: Colors.white),
             ),
+            content: const Text(
+              'Are you sure you want to sign out?',
+              style: TextStyle(color: Colors.white70),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Handle sign out
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1DB954),
+                ),
+                child: const Text(
+                  'Sign Out',
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _showDeleteAccountDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Delete Account',
-          style: TextStyle(color: Colors.red),
-        ),
-        content: const Text(
-          'This action cannot be undone. All your data will be permanently deleted.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Handle account deletion
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-            child: const Text(
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.grey[900],
+            title: const Text(
               'Delete Account',
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: Colors.red),
             ),
+            content: const Text(
+              'This action cannot be undone. All your data will be permanently deleted.',
+              style: TextStyle(color: Colors.white70),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Handle account deletion
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text(
+                  'Delete Account',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

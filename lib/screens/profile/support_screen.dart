@@ -99,19 +99,23 @@ class SupportScreen extends StatelessWidget {
 
               _buildFAQItem(
                 question: 'How do I download music for offline listening?',
-                answer: 'Go to any playlist or album, then tap the download button. Premium subscription required.',
+                answer:
+                    'Go to any playlist or album, then tap the download button. Premium subscription required.',
               ),
               _buildFAQItem(
                 question: 'Why can\'t I find a specific song?',
-                answer: 'Song availability depends on licensing agreements. Try searching for alternative versions or covers.',
+                answer:
+                    'Song availability depends on licensing agreements. Try searching for alternative versions or covers.',
               ),
               _buildFAQItem(
                 question: 'How do I cancel my subscription?',
-                answer: 'Go to Profile > Settings > Subscription and select Cancel. Your premium features will remain active until the end of your billing cycle.',
+                answer:
+                    'Go to Profile > Settings > Subscription and select Cancel. Your premium features will remain active until the end of your billing cycle.',
               ),
               _buildFAQItem(
                 question: 'My app keeps crashing, what should I do?',
-                answer: 'Try force-closing the app and restarting. If issues persist, update to the latest version or contact support.',
+                answer:
+                    'Try force-closing the app and restarting. If issues persist, update to the latest version or contact support.',
               ),
 
               const SizedBox(height: 24),
@@ -223,10 +227,7 @@ class SupportScreen extends StatelessWidget {
                     const SizedBox(height: 8),
                     const Text(
                       'Rate us on the App Store to help others discover great music!',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
@@ -236,7 +237,10 @@ class SupportScreen extends StatelessWidget {
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1DB954),
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
@@ -294,10 +298,7 @@ class SupportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFAQItem({
-    required String question,
-    required String answer,
-  }) {
+  Widget _buildFAQItem({required String question, required String answer}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -320,10 +321,7 @@ class SupportScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Text(
               answer,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 13),
             ),
           ),
         ],
@@ -355,15 +353,9 @@ class SupportScreen extends StatelessWidget {
         ),
         subtitle: Text(
           subtitle,
-          style: const TextStyle(
-            color: Colors.white54,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Colors.white54, fontSize: 12),
         ),
-        trailing: const Icon(
-          Icons.chevron_right,
-          color: Colors.white54,
-        ),
+        trailing: const Icon(Icons.chevron_right, color: Colors.white54),
         onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       ),
@@ -378,10 +370,7 @@ class SupportScreen extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 14,
-            ),
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
           Text(
             value,
@@ -399,231 +388,239 @@ class SupportScreen extends StatelessWidget {
   void _showReportBugDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Report a Bug',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Help us improve the app by reporting bugs you encounter.',
-              style: TextStyle(color: Colors.white70),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.grey[900],
+            title: const Text(
+              'Report a Bug',
+              style: TextStyle(color: Colors.white),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              maxLines: 4,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Describe the bug...',
-                hintStyle: const TextStyle(color: Colors.white54),
-                filled: true,
-                fillColor: Colors.grey[800],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Help us improve the app by reporting bugs you encounter.',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  maxLines: 4,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Describe the bug...',
+                    hintStyle: const TextStyle(color: Colors.white54),
+                    filled: true,
+                    fillColor: Colors.grey[800],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Send bug report
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1DB954),
+                ),
+                child: const Text(
+                  'Send Report',
+                  style: TextStyle(color: Colors.black),
                 ),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Send bug report
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1DB954),
-            ),
-            child: const Text(
-              'Send Report',
-              style: TextStyle(color: Colors.black),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
   void _showFeedbackDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Send Feedback',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'We\'d love to hear your thoughts and suggestions!',
-              style: TextStyle(color: Colors.white70),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.grey[900],
+            title: const Text(
+              'Send Feedback',
+              style: TextStyle(color: Colors.white),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              maxLines: 4,
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Share your feedback...',
-                hintStyle: const TextStyle(color: Colors.white54),
-                filled: true,
-                fillColor: Colors.grey[800],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide.none,
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'We\'d love to hear your thoughts and suggestions!',
+                  style: TextStyle(color: Colors.white70),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  maxLines: 4,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Share your feedback...',
+                    hintStyle: const TextStyle(color: Colors.white54),
+                    filled: true,
+                    fillColor: Colors.grey[800],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Send feedback
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1DB954),
+                ),
+                child: const Text(
+                  'Send Feedback',
+                  style: TextStyle(color: Colors.black),
                 ),
               ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Send feedback
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1DB954),
-            ),
-            child: const Text(
-              'Send Feedback',
-              style: TextStyle(color: Colors.black),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
   void _showEmailSupportDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Email Support',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'Send us an email at support@musicapp.com and we\'ll get back to you within 24-48 hours.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Open email app
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1DB954),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.grey[900],
+            title: const Text(
+              'Email Support',
+              style: TextStyle(color: Colors.white),
             ),
-            child: const Text(
-              'Open Email',
-              style: TextStyle(color: Colors.black),
+            content: const Text(
+              'Send us an email at support@musicapp.com and we\'ll get back to you within 24-48 hours.',
+              style: TextStyle(color: Colors.white70),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Open email app
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1DB954),
+                ),
+                child: const Text(
+                  'Open Email',
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _showLiveChatDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Live Chat',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Text(
-          'Live chat is available for Premium subscribers. Chat with our support team in real-time.',
-          style: TextStyle(color: Colors.white70),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Open live chat
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1DB954),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.grey[900],
+            title: const Text(
+              'Live Chat',
+              style: TextStyle(color: Colors.white),
             ),
-            child: const Text(
-              'Start Chat',
-              style: TextStyle(color: Colors.black),
+            content: const Text(
+              'Live chat is available for Premium subscribers. Chat with our support team in real-time.',
+              style: TextStyle(color: Colors.white70),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Open live chat
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1DB954),
+                ),
+                child: const Text(
+                  'Start Chat',
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 
   void _showPhoneSupportDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.grey[900],
-        title: const Text(
-          'Phone Support',
-          style: TextStyle(color: Colors.white),
-        ),
-        content: const Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Call us at: +1 (555) 123-4567',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: Colors.grey[900],
+            title: const Text(
+              'Phone Support',
+              style: TextStyle(color: Colors.white),
             ),
-            SizedBox(height: 8),
-            Text(
-              'Business Hours:\nMonday - Friday: 9:00 AM - 6:00 PM (EST)\nSaturday: 10:00 AM - 4:00 PM (EST)',
-              style: TextStyle(color: Colors.white70),
+            content: const Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Call us at: +1 (555) 123-4567',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Business Hours:\nMonday - Friday: 9:00 AM - 6:00 PM (EST)\nSaturday: 10:00 AM - 4:00 PM (EST)',
+                  style: TextStyle(color: Colors.white70),
+                ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  // Open phone dialer
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1DB954),
+                ),
+                child: const Text(
+                  'Call Now',
+                  style: TextStyle(color: Colors.black),
+                ),
+              ),
+            ],
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // Open phone dialer
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1DB954),
-            ),
-            child: const Text(
-              'Call Now',
-              style: TextStyle(color: Colors.black),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

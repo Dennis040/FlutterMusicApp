@@ -75,7 +75,7 @@ class _ProfileTabState extends State<ProfileTab> {
     }
   }
 
-  @override 
+  @override
   Widget build(BuildContext context) {
     return Container(
       color: Colors.black,

@@ -337,7 +337,10 @@ class _LibraryTabState extends State<LibraryTab> {
                       context,
                       MaterialPageRoute(
                         builder:
-                            (context) => PlaylistUserLib(playlistID: item.id, playlistName: item.name,),
+                            (context) => PlaylistUserLib(
+                              playlistID: item.id,
+                              playlistName: item.name,
+                            ),
                       ),
                     );
                   },
