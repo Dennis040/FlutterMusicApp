@@ -467,11 +467,34 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                               color: Colors.white,
                             ),
                           ),
-                          onTap: () {
-                            showAddSongsToPlaylistModal(
+                          onTap: () async {
+                            final result = await showAddSongsToPlaylistModal(
                               context,
                               widget.playlistID,
                             );
+                            // showAddSongsToPlaylistModal(
+                            //   context,
+                            //   widget.playlistID,
+                            // );
+                            if (result == true) {
+                              // Load lại danh sách bài hát trong playlist
+                              fetchSongs()
+                                  .then((data) {
+                                    debugPrint("Fetch successful");
+                                    setState(() {
+                                      _songs = data;
+                                      debugPrint(
+                                        "Songs loaded successfully: ${data.length} songs",
+                                      );
+                                    });
+                                    loadSuggestedSongs();
+                                  })
+                                  .catchError((e) {
+                                    debugPrint(
+                                      "Error occurred while fetching songs",
+                                    );
+                                  }); //cập nhật UI
+                            }
                           },
                         ),
                         ListTile(
@@ -503,285 +526,43 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                               color: Colors.white,
                             ),
                           ),
-                          onTap: () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: AppColors.background,
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(16),
-                                ),
-                              ),
-                              builder: (context) {
-                                return DraggableScrollableSheet(
-                                  initialChildSize: 0.95,
-                                  expand: false,
-                                  builder: (_, controller) {
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 8,
-                                      ),
-                                      child: CustomScrollView(
-                                        controller: controller,
-                                        slivers: [
-                                          SliverToBoxAdapter(
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                // Header
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: [
-                                                    // Huỷ
-                                                    GestureDetector(
-                                                      onTap: () {
-                                                        Navigator.pop(
-                                                          context,
-                                                        ); // hoặc xử lý khác
-                                                      },
-                                                      child: const Text(
-                                                        'Huỷ',
-                                                        style: TextStyle(
-                                                          color: Colors.white,
-                                                        ),
-                                                      ),
-                                                    ),
-
-                                                    // Tiêu đề
-                                                    const Text(
-                                                      'Chỉnh sửa Playlist',
-                                                      style: TextStyle(
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-
-                                                    // Lưu
-                                                    GestureDetector(
-                                                      onTap: () async {
-                                                        try {
-                                                          // Cập nhật tên playlist
-                                                          final updateResponse = await http.put(
-                                                            Uri.parse(
-                                                              '${ip}PlaylistUsers/PLaylistUsersName/${widget.playlistID}',
-                                                            ),
-                                                            headers: {
-                                                              'Content-Type':
-                                                                  'application/json',
-                                                            },
-                                                            body: jsonEncode({
-                                                              'playlistName':
-                                                                  _playlistName,
-                                                            }),
-                                                          );
-
-                                                          if (updateResponse
-                                                                  .statusCode !=
-                                                              200) {
-                                                            throw Exception(
-                                                              'Không thể cập nhật playlist',
-                                                            );
-                                                          }
-
-                                                          // Xoá các bài hát đã bị remove
-                                                          for (var song
-                                                              in _removedSongs) {
-                                                            final deleteResponse =
-                                                                await http.delete(
-                                                                  Uri.parse(
-                                                                    '${ip}PlaylistUsers/playlists/${widget.playlistID}/songs/${song.songId}',
-                                                                  ),
-                                                                );
-
-                                                            if (deleteResponse
-                                                                    .statusCode !=
-                                                                200) {
-                                                              throw Exception(
-                                                                'Xoá bài hát thất bại: ${song.songName}',
-                                                              );
-                                                            }
-                                                          }
-
-                                                          // Xoá xong -> đóng modal + làm mới nếu cần
-                                                          Navigator.pop(
-                                                            context,
-                                                          );
-                                                          ScaffoldMessenger.of(
-                                                            context,
-                                                          ).showSnackBar(
-                                                            SnackBar(
-                                                              content: Text(
-                                                                'Đã cập nhật playlist thành công',
-                                                              ),
-                                                            ),
-                                                          );
-                                                        } catch (e) {
-                                                          debugPrint(
-                                                            e.toString(),
-                                                          );
-                                                          ScaffoldMessenger.of(
-                                                            context,
-                                                          ).showSnackBar(
-                                                            SnackBar(
-                                                              content: Text(
-                                                                'Lỗi: ${e.toString()}',
-                                                              ),
-                                                            ),
-                                                          );
-                                                        }
-                                                      },
-
-                                                      child: const Text(
-                                                        'Lưu',
-                                                        style: TextStyle(
-                                                          color:
-                                                              Colors
-                                                                  .grey, // đổi màu nếu cần
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 20),
-
-                                                // Ảnh playlist
-                                                Center(
-                                                  child: Column(
-                                                    children: [
-                                                      SizedBox(
-                                                        width: 160,
-                                                        height: 160,
-                                                        child: _buildImageGrid(
-                                                          _getPlaylistCoverImages(),
-                                                        ), // <<< Gọi hàm tại đây
-                                                      ),
-                                                      const SizedBox(height: 8),
-                                                      const Text(
-                                                        'Thay đổi hình ảnh',
-                                                        style: TextStyle(
-                                                          color: Colors.white,
-                                                          decoration:
-                                                              TextDecoration
-                                                                  .underline,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-
-                                                const SizedBox(height: 20),
-
-                                                Center(
-                                                  child: Column(
-                                                    crossAxisAlignment:
-                                                        CrossAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      // Tên playlist
-                                                      TextFormField(
-                                                        initialValue:
-                                                            _playlistName,
-                                                        onChanged: (value) {
-                                                          setState(() {
-                                                            _playlistName =
-                                                                value; // cập nhật lại tên playlist
-                                                          });
-                                                        },
-                                                        textAlign:
-                                                            TextAlign.center,
-                                                        style: const TextStyle(
-                                                          fontSize: 20,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.white,
-                                                        ),
-                                                        decoration: const InputDecoration(
-                                                          border:
-                                                              InputBorder
-                                                                  .none, // không viền
-                                                          hintText:
-                                                              'Nhập tên playlist',
-                                                          hintStyle: TextStyle(
-                                                            color: Colors.grey,
-                                                          ),
-                                                        ),
-                                                      ),
-
-                                                      const SizedBox(
-                                                        height: 10,
-                                                      ),
-
-                                                      // Thêm phần mô tả
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                              horizontal: 16,
-                                                              vertical: 10,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          border: Border.all(
-                                                            color:
-                                                                Colors.white24,
-                                                          ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                24,
-                                                              ),
-                                                        ),
-                                                        child: const Text(
-                                                          'Thêm phần mô tả',
-                                                          style: TextStyle(
-                                                            color: Colors.white,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-
-                                                const SizedBox(height: 10),
-                                              ],
-                                            ),
-                                          ),
-
-                                          // Danh sách bài hát
-                                          SliverToBoxAdapter(
-                                            child: AnimatedList(
-                                              key: _listKey,
-                                              initialItemCount: _songs!.length,
-                                              shrinkWrap: true,
-                                              physics:
-                                                  const NeverScrollableScrollPhysics(),
-                                              itemBuilder: (
-                                                context,
-                                                index,
-                                                animation,
-                                              ) {
-                                                final song = _songs![index];
-                                                return SizeTransition(
-                                                  sizeFactor: animation,
-                                                  child: _buildSongItem(
-                                                    song,
-                                                    index,
-                                                  ),
-                                                );
-                                              },
-                                            ), // <- bọc AnimatedList trong SliverToBoxAdapter
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                );
+                          onTap: () async {
+                            final result = await showEditPlaylistModal(
+                              context,
+                              playlistID: widget.playlistID,
+                              songs: _songs!,
+                              initialName: _playlistName,
+                              removedSongs: _removedSongs,
+                              onNameChanged: (newName) {
+                                setState(() {
+                                  _playlistName = newName;
+                                });
                               },
+                              listKey: _listKey,
+                              buildImageGrid: _buildImageGrid,
+                              buildSongItem: _buildSongItem,
+                              getPlaylistCoverImages: _getPlaylistCoverImages,
                             );
+
+                            if (result == true) {
+                              // Load lại danh sách bài hát trong playlist
+                              fetchSongs()
+                                  .then((data) {
+                                    debugPrint("Fetch successful");
+                                    setState(() {
+                                      _songs = data;
+                                      debugPrint(
+                                        "Songs loaded successfully: ${data.length} songs",
+                                      );
+                                    });
+                                    loadSuggestedSongs();
+                                  })
+                                  .catchError((e) {
+                                    debugPrint(
+                                      "Error occurred while fetching songs",
+                                    );
+                                  }); //cập nhật UI
+                            }
                           },
                         ),
                         ListTile(
@@ -1297,8 +1078,11 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
     );
   }
 
-  void showAddSongsToPlaylistModal(BuildContext context, int playlistId) {
-    showModalBottomSheet(
+  Future<bool?> showAddSongsToPlaylistModal(
+    BuildContext context,
+    int playlistId,
+  ) {
+    return showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.black,
@@ -1322,8 +1106,17 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                     children: [
                       // Header
                       Row(
-                        children: const [
-                          Icon(Icons.close, color: Colors.white),
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.close, color: Colors.white),
+                            onPressed: () {
+                              Navigator.pop(
+                                context,
+                                true,
+                              ); //  Trả về true nếu muốn load lại
+                            },
+                          ),
+
                           SizedBox(width: 12),
                           Text(
                             'Thêm vào danh sách phát này',
@@ -1493,6 +1286,212 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
     } else {
       throw Exception('Lỗi tải bài hát');
     }
+  }
+
+  Future<bool?> showEditPlaylistModal(
+    BuildContext context, {
+    required int playlistID,
+    required List<Song> songs,
+    required String initialName,
+    required List<Song> removedSongs,
+    required Function(String) onNameChanged,
+    required GlobalKey<AnimatedListState> listKey,
+    required Widget Function(List<String>) buildImageGrid,
+    required Widget Function(Song, int) buildSongItem,
+    required List<String> Function() getPlaylistCoverImages,
+  }) {
+    return showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.95,
+          expand: false,
+          builder: (_, controller) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: CustomScrollView(
+                controller: controller,
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.pop(context, false);
+                              },
+                              child: const Text(
+                                'Huỷ',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                            const Text(
+                              'Chỉnh sửa Playlist',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            GestureDetector(
+                              onTap: () async {
+                                try {
+                                  // Cập nhật tên playlist
+                                  final updateResponse = await http.put(
+                                    Uri.parse(
+                                      '${ip}PlaylistUsers/PLaylistUsersName/$playlistID',
+                                    ),
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                    },
+                                    body: jsonEncode({
+                                      'playlistName': initialName,
+                                    }),
+                                  );
+                                  if (updateResponse.statusCode != 200) {
+                                    throw Exception(
+                                      'Không thể cập nhật playlist',
+                                    );
+                                  }
+
+                                  // Xoá các bài hát đã remove
+                                  for (var song in removedSongs) {
+                                    final deleteResponse = await http.delete(
+                                      Uri.parse(
+                                        '${ip}PlaylistUsers/playlists/$playlistID/songs/${song.songId}',
+                                      ),
+                                    );
+                                    if (deleteResponse.statusCode != 200) {
+                                      throw Exception(
+                                        'Xoá bài hát thất bại: ${song.songName}',
+                                      );
+                                    }
+                                  }
+                                  if (!mounted) return;
+                                  Navigator.pop(context, true); // ✅ Trả về true
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Đã cập nhật playlist thành công',
+                                      ),
+                                    ),
+                                  );
+                                } catch (e) {
+                                  debugPrint(e.toString());
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('Lỗi: ${e.toString()}'),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: const Text(
+                                'Lưu',
+                                style: TextStyle(color: Colors.grey),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        // Ảnh playlist
+                        Center(
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                width: 160,
+                                height: 160,
+                                child: buildImageGrid(getPlaylistCoverImages()),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Thay đổi hình ảnh',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Tên playlist
+                        Center(
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                initialValue: initialName,
+                                onChanged: (value) => onNameChanged(value),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  hintText: 'Nhập tên playlist',
+                                  hintStyle: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.white24),
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: const Text(
+                                  'Thêm phần mô tả',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                    ),
+                  ),
+
+                  // Danh sách bài hát
+                  SliverToBoxAdapter(
+                    child: AnimatedList(
+                      key: listKey,
+                      initialItemCount: songs.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (context, index, animation) {
+                        final song = songs[index];
+                        return SizeTransition(
+                          sizeFactor: animation,
+                          child: buildSongItem(song, index),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _buildBackButton() {

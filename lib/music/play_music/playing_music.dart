@@ -45,11 +45,11 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   late List<Song> songs;
   late List<Song> shuffledList;
   late int currentIndex;
-  late int currentIndexS;
   late Song currentSong;
   // late AudioPlayerManager audioPlayerManager;
   bool _isNexting = false;
   StreamSubscription<PlayerState>? _playerStateSub;
+  StreamSubscription<MediaItem?>? _mediaItemSub;
 
   @override
   void initState() {
@@ -76,22 +76,35 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     // audioPlayerManager = AudioPlayerManager(songUrl: currentSong.linkSong!);
     _initPlayer();
     _generateColors();
-    final mediaItem = MediaItem(
-      id: currentSong.linkSong!, // hoặc link bài nhạc
-      title: currentSong.songName,
-      artist: currentSong.artistName,
-      artUri: Uri.parse(currentSong.songImage),
-    );
-    globalAudioHandler.addQueueItem(mediaItem);
+    // final mediaItem = MediaItem(
+    //   id: currentSong.linkSong!, // hoặc link bài nhạc
+    //   title: currentSong.songName,
+    //   artist: currentSong.artistName,
+    //   artUri: Uri.parse(currentSong.songImage),
+    // );
+    // globalAudioHandler.addQueueItem(mediaItem);
+    _setupNotificationCallbacks();
   }
 
   @override
   void dispose() {
     _lyricsScrollController.dispose();
     _pageAnimationController.dispose();
+    _imageAnimationController.dispose();
     _playerStateSub?.cancel();
+    _mediaItemSub?.cancel();
     // audioPlayerManager.dispose();
     super.dispose();
+  }
+
+  void _setupNotificationCallbacks() {
+    // Setup callbacks for notification controls
+    (globalAudioHandler as MyAudioHandler).setCallbacks(
+      onNext: _playNextSong,
+      onPrevious: _playPreviousSong,
+      onShuffle: _toggleShuffle,
+      onRepeat: _toggleRepeat,
+    );
   }
 
   void _toggleView() {
@@ -125,6 +138,17 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     // await audioPlayerManager.init(); // Đợi nhạc load xong
     // audioPlayerManager.player.play(); // Bắt đầu phát nhạc
     await _loadLyrics();
+    await _generateColors();
+    // Create media item
+    final mediaItem = MediaItem(
+      id: currentSong.linkSong!,
+      title: currentSong.songName,
+      artist: currentSong.artistName,
+      artUri: Uri.parse(currentSong.songImage),
+      duration: null, // Will be updated when loaded
+    );
+    // Add to queue and play
+    await globalAudioHandler.addQueueItem(mediaItem);
     (globalAudioHandler as MyAudioHandler).player.positionStream.listen(
       _updateCurrentLyric,
     );
@@ -140,33 +164,96 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             _playNextSong().then((_) => _isNexting = false);
           }
         });
+
+    // Listen to media item changes (for notification updates)
+    _mediaItemSub?.cancel();
+    _mediaItemSub = globalAudioHandler.mediaItem.listen((mediaItem) {
+      if (mediaItem != null) {
+        // Update current song if changed from notification
+        final newSong = songs.firstWhere(
+          (song) => song.linkSong == mediaItem.id,
+          orElse: () => currentSong,
+        );
+        if (newSong != currentSong) {
+          setState(() {
+            currentSong = newSong;
+            currentIndex = songs.indexOf(newSong);
+          });
+          _loadLyrics();
+          _generateColors();
+        }
+      }
+    });
   }
 
   Future<void> _playNextSong() async {
     if (currentIndex < songs.length - 1) {
       setState(() {
         currentIndex++;
-        if (_isShuffled) {
-          currentSong = shuffledList[currentIndex];
-        } else {
-          // debugPrint('${currentIndex}');
-          currentSong = songs[currentIndex];
-          // debugPrint('${currentIndex}');
-        }
+        currentSong =
+            _isShuffled ? shuffledList[currentIndex] : songs[currentIndex];
       });
-      final mediaItem = MediaItem(
-        id: currentSong.linkSong!, // hoặc link bài nhạc
-        title: currentSong.songName,
-        artist: currentSong.artistName,
-        artUri: Uri.parse(currentSong.songImage),
-      );
-      globalAudioHandler.addQueueItem(mediaItem);
-      // audioPlayerManager = AudioPlayerManager(songUrl: currentSong.linkSong!);
-      // await showMusicNotification(currentSong, audioPlayerManager);
-      await _initPlayer();
-    } else {
-      debugPrint("Đã đến bài cuối cùng");
+      await _playSong(currentSong);
+    } else if (_loopMode == LoopMode.all) {
+      setState(() {
+        currentIndex = 0;
+        currentSong =
+            _isShuffled ? shuffledList[currentIndex] : songs[currentIndex];
+      });
+      await _playSong(currentSong);
     }
+  }
+
+  Future<void> _playPreviousSong() async {
+    if (currentIndex > 0) {
+      setState(() {
+        currentIndex--;
+        currentSong =
+            _isShuffled ? shuffledList[currentIndex] : songs[currentIndex];
+      });
+      await _playSong(currentSong);
+    } else {
+      // Seek to beginning
+      await (globalAudioHandler as MyAudioHandler).player.seek(Duration.zero);
+    }
+  }
+
+  Future<void> _playSong(Song song) async {
+    final mediaItem = MediaItem(
+      id: song.linkSong!,
+      title: song.songName,
+      artist: song.artistName,
+      artUri: Uri.parse(song.songImage),
+    );
+
+    await globalAudioHandler.addQueueItem(mediaItem);
+    await _loadLyrics();
+    await _generateColors();
+  }
+
+  void _toggleShuffle() {
+    setState(() {
+      _isShuffled = !_isShuffled;
+      if (_isShuffled) {
+        shuffledList = List.from(songs);
+        shuffledList.shuffle();
+        currentIndex = shuffledList.indexOf(currentSong);
+      } else {
+        currentIndex = songs.indexOf(currentSong);
+      }
+    });
+
+    // Update handler state
+    (globalAudioHandler as MyAudioHandler).updateShuffleState(_isShuffled);
+  }
+
+  void _toggleRepeat() {
+    setState(() {
+      _loopMode = _getNextLoopMode();
+    });
+
+    // Update handler state
+    (globalAudioHandler as MyAudioHandler).updateRepeatState(_loopMode);
   }
 
   Future<void> _loadLyrics() async {
@@ -314,7 +401,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
           ),
           title: Text(
             currentSong.songName,
-            style: TextStyle(
+            style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
               fontSize: 18,
