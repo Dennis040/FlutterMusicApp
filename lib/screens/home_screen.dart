@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_music_app/chatbox/chat_screen.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/app_colors.dart';
 import 'tabs/home_tab.dart';
 import 'tabs/search_tab.dart';
@@ -21,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen>
   late PageController _pageController;
   late AnimationController _animationController;
   late List<Animation<double>> _tabIconAnimations;
-
+  int? userId;
   final List<Widget> _screens = [
     const HomeTab(),
     const SearchTab(),
@@ -51,6 +54,23 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
     );
+    fetchUser();
+  }
+   Future<int?> getUserIdFromToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('accessToken');
+
+    if (token == null || JwtDecoder.isExpired(token)) return null;
+
+    Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+    final userId = decodedToken['nameid'];
+
+    return int.tryParse(userId.toString());
+  }
+
+   Future<void> fetchUser() async {
+
+    userId = await getUserIdFromToken();
   }
 
   @override
@@ -157,6 +177,26 @@ class _HomeScreenState extends State<HomeScreen>
                     context,
                     MaterialPageRoute(
                       builder: (context) => const DownloadedSongsScreen(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.chat, color: Colors.white),
+                title: const Text(
+                  'Trợ lý AI (Chat)',
+                  style: TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.pop(
+                    context,
+                  ); // Đóng drawer hoặc bottom sheet nếu có
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) =>
+                              MusicChatScreen(userId: userId), // 👈 Mở chatbox
                     ),
                   );
                 },
