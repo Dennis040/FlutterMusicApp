@@ -51,7 +51,7 @@ class _ArtistScreenState extends State<ArtistUserLib> {
   void _scrollListener() {
     setState(() {
       _scrollOffset = _scrollController.offset;
-      _showStickyHeader = _scrollOffset > 300;
+      _showStickyHeader = _scrollOffset > 200;
     });
   }
 
@@ -59,9 +59,8 @@ class _ArtistScreenState extends State<ArtistUserLib> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) =>
-                PlayingMusicInterface(songs: _songs!, currentIndex: index),
+        builder: (context) =>
+            PlayingMusicInterface(songs: _songs!, currentIndex: index),
       ),
     );
   }
@@ -71,7 +70,6 @@ class _ArtistScreenState extends State<ArtistUserLib> {
     try {
       final response = await http.get(
         Uri.parse('${ip}Artists/playlists/${widget.artistID}/songs'),
-        //Uri.parse('http://192.168.29.101:5207/api/Songs'),
       );
 
       debugPrint("API Response Status: ${response.statusCode}");
@@ -81,18 +79,17 @@ class _ArtistScreenState extends State<ArtistUserLib> {
         final List<dynamic> data = jsonDecode(response.body);
         debugPrint("Parsed ${data.length} songs from API");
 
-        final songs =
-            data.map((json) {
-              try {
-                final song = Song.fromJson(json);
-                debugPrint("Successfully parsed song: ${song.songName}");
-                return song;
-              } catch (e) {
-                debugPrint("Error parsing song: $e");
-                debugPrint("Problematic JSON: $json");
-                rethrow;
-              }
-            }).toList();
+        final songs = data.map((json) {
+          try {
+            final song = Song.fromJson(json);
+            debugPrint("Successfully parsed song: ${song.songName}");
+            return song;
+          } catch (e) {
+            debugPrint("Error parsing song: $e");
+            debugPrint("Problematic JSON: $json");
+            rethrow;
+          }
+        }).toList();
 
         debugPrint("Total songs parsed: ${songs.length}");
         return songs;
@@ -113,7 +110,6 @@ class _ArtistScreenState extends State<ArtistUserLib> {
       final data = jsonDecode(response.body);
       return data['artistImage'] as String;
     } else {
-      // Có thể log lỗi hoặc throw exception tùy bạn
       debugPrint("Lỗi: ${response.statusCode}");
       return null;
     }
@@ -128,7 +124,6 @@ class _ArtistScreenState extends State<ArtistUserLib> {
       final data = jsonDecode(response.body);
       return data['artistName'] as String;
     } else {
-      // Có thể log lỗi hoặc throw exception tùy bạn
       debugPrint("Lỗi: ${response.statusCode}");
       return null;
     }
@@ -143,196 +138,341 @@ class _ArtistScreenState extends State<ArtistUserLib> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF4C1D95), Color(0xFF1A1A2E), Color(0xFF0F0F23)],
-            stops: [0.0, 0.4, 1.0],
-          ),
-        ),
-        child: Stack(
-          children: [
-            CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                SliverToBoxAdapter(child: _buildHeader()),
-                SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    if (index == 0) {
-                      return _buildActionButtons();
-                    }
-                    return _buildTrackItem(_songs![index - 1], index - 1);
-                  }, childCount: _songs!.length + 1),
+      backgroundColor: const Color(0xFF121212),
+      body: Stack(
+        children: [
+          // Background gradient từ ảnh artist
+          if (_artistImage != null)
+            Container(
+              height: 350,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0xFF1DB954).withOpacity(0.8),
+                    Color(0xFF1DB954).withOpacity(0.3),
+                    Color(0xFF121212),
+                  ],
+                  stops: [0.0, 0.5, 1.0],
                 ),
-              ],
+              ),
             ),
-            _buildStickyHeader(),
-            _buildBackButton(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    double opacity = (1.0 - (_scrollOffset / 400)).clamp(0.0, 1.0);
-    double scale = (1.0 - (_scrollOffset / 800)).clamp(0.8, 1.0);
-
-    return AnimatedOpacity(
-      opacity: opacity,
-      duration: Duration(milliseconds: 100),
-      child: Transform.scale(
-        scale: scale,
-        child: Container(
-          height: MediaQuery.of(context).size.height * 0.7,
-          padding: EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox(height: 50),
-              _buildPlaylistCover(),
-              SizedBox(height: 30),
-              _buildPlaylistInfo(),
-              SizedBox(height: 30),
-              _buildControls(),
+          
+          CustomScrollView(
+            controller: _scrollController,
+            slivers: [
+              // Header với ảnh artist
+              SliverAppBar(
+                expandedHeight: 320,
+                floating: false,
+                pinned: true,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                leading: Container(
+                  margin: EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.6),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                actions: [
+                  Container(
+                    margin: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: Icon(Icons.more_vert, color: Colors.white, size: 20),
+                      onPressed: () {},
+                    ),
+                  ),
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  background: Container(
+                    padding: EdgeInsets.only(top: 120, left: 20, right: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Artist image
+                        Container(
+                          width: 200,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.5),
+                                blurRadius: 30,
+                                offset: Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: ClipOval(
+                            child: _artistImage == null
+                                ? Container(
+                                    color: Colors.grey[800],
+                                    child: Icon(
+                                      Icons.person,
+                                      size: 100,
+                                      color: Colors.grey[600],
+                                    ),
+                                  )
+                                : Image.network(
+                                    _artistImage!,
+                                    fit: BoxFit.cover,
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              
+              // Artist info và controls
+              SliverToBoxAdapter(
+                child: Container(
+                  color: Color(0xFF121212),
+                  padding: EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Artist name
+                      Text(
+                        _artistName ?? 'Loading...',
+                        style: TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          letterSpacing: -1,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      
+                      // Follower count (giả lập)
+                      Text(
+                        '${(_songs?.length ?? 0) * 12847} monthly listeners',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[400],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      
+                      SizedBox(height: 32),
+                      
+                      // Control buttons
+                      Row(
+                        children: [
+                          // Follow button
+                          Container(
+                            height: 32,
+                            padding: EdgeInsets.symmetric(horizontal: 24),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey[600]!),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Follow',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ),
+                          
+                          SizedBox(width: 16),
+                          
+                          // More options
+                          Container(
+                            width: 32,
+                            height: 32,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: Icon(
+                                Icons.more_horiz,
+                                color: Colors.grey[400],
+                                size: 24,
+                              ),
+                              onPressed: () {},
+                            ),
+                          ),
+                          
+                          Spacer(),
+                          
+                          // Shuffle button
+                          Container(
+                            width: 32,
+                            height: 32,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: Icon(
+                                Icons.shuffle,
+                                color: Colors.grey[400],
+                                size: 24,
+                              ),
+                              onPressed: () {},
+                            ),
+                          ),
+                          
+                          SizedBox(width: 16),
+                          
+                          // Play button
+                          Container(
+                            width: 56,
+                            height: 56,
+                            decoration: BoxDecoration(
+                              color: Color(0xFF1DB954),
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.play_arrow,
+                                color: Colors.black,
+                                size: 28,
+                              ),
+                              onPressed: () {
+                                if (_songs != null && _songs!.isNotEmpty) {
+                                  _playSong(_songs![0], 0);
+                                }
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      SizedBox(height: 32),
+                      
+                      // Popular section
+                      Text(
+                        'Popular',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      
+                      SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+              
+              // Songs list
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    if (_songs == null || _songs!.isEmpty) {
+                      return Container(
+                        height: 200,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF1DB954),
+                          ),
+                        ),
+                      );
+                    }
+                    
+                    final song = _songs![index];
+                    return _buildTrackItem(song, index);
+                  },
+                  childCount: _songs?.length ?? 1,
+                ),
+              ),
+              
+              // Bottom padding
+              SliverToBoxAdapter(
+                child: SizedBox(height: 100),
+              ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlaylistCover() {
-    return Container(
-      width: 280,
-      height: 280,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 20,
-            offset: Offset(0, 10),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child:
-            _artistImage == null
-                ? CircularProgressIndicator()
-                : Image.network(_artistImage!),
-      ),
-    );
-  }
-
-  Widget _buildPlaylistInfo() {
-    return Column(
-      children: [
-        ShaderMask(
-          shaderCallback:
-              (bounds) => LinearGradient(
-                colors: [Colors.white, Color(0xFFE0E7FF)],
-              ).createShader(bounds),
-          child: Text(
-            "Danh sách bài hát của ${_artistName}",
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+          
+          // Sticky header khi scroll
+          if (_showStickyHeader)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Color(0xFF121212).withOpacity(0.95),
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.arrow_back, color: Colors.white),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                        
+                        SizedBox(width: 16),
+                        
+                        // Mini artist image
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                          ),
+                          child: ClipOval(
+                            child: _artistImage == null
+                                ? Container(color: Colors.grey[800])
+                                : Image.network(_artistImage!, fit: BoxFit.cover),
+                          ),
+                        ),
+                        
+                        SizedBox(width: 16),
+                        
+                        Expanded(
+                          child: Text(
+                            _artistName ?? '',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        
+                        // Mini controls
+                        IconButton(
+                          icon: Icon(Icons.shuffle, color: Colors.grey[400]),
+                          onPressed: () {},
+                        ),
+                        
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: Color(0xFF1DB954),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.play_arrow,
+                            color: Colors.black,
+                            size: 20,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        SizedBox(height: 15),
-      ],
-    );
-  }
-
-  Widget _buildControls() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildControlButton(Icons.shuffle, 40),
-        SizedBox(width: 20),
-        _buildPlayButton(),
-        SizedBox(width: 20),
-        _buildControlButton(Icons.more_horiz, 40),
-      ],
-    );
-  }
-
-  Widget _buildPlayButton() {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: Color(0xFF1DB954),
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Color(0xFF1DB954).withOpacity(0.3),
-            blurRadius: 15,
-            offset: Offset(0, 5),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: Icon(Icons.play_arrow, color: Colors.white, size: 30),
-        onPressed: () {
-          HapticFeedback.lightImpact();
-        },
-      ),
-    );
-  }
-
-  Widget _buildControlButton(IconData icon, double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        shape: BoxShape.circle,
-      ),
-      child: IconButton(
-        icon: Icon(icon, color: Colors.white, size: size * 0.5),
-        onPressed: () {
-          HapticFeedback.lightImpact();
-        },
-      ),
-    );
-  }
-
-  Widget _buildActionButtons() {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: Row(
-        children: [
-          _buildActionButton("+ Thêm", Icons.add),
-          SizedBox(width: 15),
-          _buildActionButton("Chỉnh sửa", Icons.edit),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton(String text, IconData icon) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
-        borderRadius: BorderRadius.circular(25),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: Colors.white),
-          SizedBox(width: 8),
-          Text(text, style: TextStyle(fontSize: 14, color: Colors.white)),
         ],
       ),
     );
@@ -340,7 +480,7 @@ class _ArtistScreenState extends State<ArtistUserLib> {
 
   Widget _buildTrackItem(Song song, int index) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+      color: Color(0xFF121212),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -348,23 +488,41 @@ class _ArtistScreenState extends State<ArtistUserLib> {
             HapticFeedback.lightImpact();
             _playSong(song, index);
           },
-          borderRadius: BorderRadius.circular(8),
           child: Container(
-            padding: EdgeInsets.all(12),
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Row(
               children: [
+                // Track number
                 Container(
-                  width: 50,
-                  height: 50,
+                  width: 32,
+                  child: Text(
+                    '${index + 1}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[400],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                
+                SizedBox(width: 16),
+                
+                // Song image
+                Container(
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(4),
                     image: DecorationImage(
                       image: NetworkImage(song.songImage),
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
-                SizedBox(width: 15),
+                
+                SizedBox(width: 16),
+                
+                // Song info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -376,129 +534,43 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                           fontWeight: FontWeight.w500,
                           color: Colors.white,
                         ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        song.artistName ?? 'Unknown Artist',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.7),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.more_vert,
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                  },
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStickyHeader() {
-    return AnimatedContainer(
-      duration: Duration(milliseconds: 300),
-      transform: Matrix4.translationValues(0, _showStickyHeader ? 0 : -100, 0),
-      child: Container(
-        height: 80,
-        decoration: BoxDecoration(
-          image:
-              _artistImage != null
-                  ? DecorationImage(
-                    image: NetworkImage(_artistImage!),
-                    fit: BoxFit.cover,
-                  )
-                  : null,
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    image:
-                        _artistImage != null
-                            ? DecorationImage(
-                              image: NetworkImage(_artistImage!),
-                              fit: BoxFit.cover,
-                            )
-                            : null,
-                  ),
-                ),
-                SizedBox(width: 15),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Danh sách bài hát của ${_artistName}",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      Text(
-                        "khang",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withOpacity(0.7),
+                      if (song.artistName != null && song.artistName!.isNotEmpty)
+                        Text(
+                          song.artistName!,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[400],
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
                     ],
                   ),
                 ),
-                _buildControlButton(Icons.shuffle, 36),
-                SizedBox(width: 10),
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Color(0xFF1DB954),
-                    shape: BoxShape.circle,
+                
+                // Play count (giả lập)
+                Text(
+                  '${(index + 1) * 1234567}',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[400],
                   ),
-                  child: Icon(Icons.play_arrow, color: Colors.white, size: 20),
+                ),
+                
+                SizedBox(width: 16),
+                
+                // More options
+                IconButton(
+                  icon: Icon(
+                    Icons.more_horiz,
+                    color: Colors.grey[400],
+                    size: 20,
+                  ),
+                  onPressed: () {},
                 ),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBackButton() {
-    return SafeArea(
-      child: Positioned(
-        top: 20,
-        left: 20,
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.5),
-            shape: BoxShape.circle,
-          ),
-          child: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.white, size: 20),
-            onPressed: () {
-              Navigator.pop(context);
-            },
           ),
         ),
       ),
