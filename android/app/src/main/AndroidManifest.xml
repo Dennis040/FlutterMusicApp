@@ -64,9 +64,9 @@
                 android:value="SANDBOX" />
         </activity>
         <!-- Đây là App ID test của Google -->
-        <meta-data
+        <!-- <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-3940256099942544~3347511713" /> -->
 
         <!-- AudioService configuration - QUAN TRỌNG -->
         <service

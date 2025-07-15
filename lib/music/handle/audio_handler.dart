@@ -159,9 +159,44 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
       // Update current media item
       this.mediaItem.add(mediaItem);
 
-      // await player.play();
+      await player.play();
+      // Cập nhật notification
+      _notifyAudioHandlerOfDataChange();
     } catch (e) {
       debugPrint("Lỗi khi phát bài hát: $e");
+    }
+  }
+
+  // Thêm method mới để set toàn bộ queue
+  Future<void> setQueue(List<MediaItem> mediaItems, int initialIndex) async {
+    try {
+      final audioSources =
+          mediaItems
+              .map((item) => AudioSource.uri(Uri.parse(item.id), tag: item))
+              .toList();
+
+      await player.setAudioSource(
+        ConcatenatingAudioSource(children: audioSources),
+        initialIndex: initialIndex,
+      );
+
+      queue.add(mediaItems);
+      if (mediaItems.isNotEmpty) {
+        mediaItem.add(mediaItems[initialIndex]);
+      }
+
+      _notifyAudioHandlerOfDataChange();
+    } catch (e) {
+      debugPrint("Lỗi khi set queue: $e");
+    }
+  }
+
+  // Thêm method để chuyển bài mà không thay đổi queue
+  Future<void> skipToIndex(int index) async {
+    if (index >= 0 && index < queue.value.length) {
+      await player.seek(Duration.zero, index: index);
+      mediaItem.add(queue.value[index]);
+      _notifyAudioHandlerOfDataChange();
     }
   }
 

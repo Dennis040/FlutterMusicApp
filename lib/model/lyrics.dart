@@ -32,7 +32,7 @@ class Lyrics {
       if (response.statusCode == 200) {
         // Convert response body to UTF-8
         final String decodedBody = utf8.decode(response.bodyBytes);
-        debugPrint("LRC content: $decodedBody");
+        // debugPrint("LRC content: $decodedBody");
 
         final lyrics = LyricLine.parseLrc(decodedBody);
         debugPrint("Parsed ${lyrics.length} lyric lines");

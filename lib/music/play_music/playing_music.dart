@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_music_app/config/config.dart';
 import 'package:flutter_music_app/main.dart';
 import 'package:flutter_music_app/music/handle/audio_handler.dart';
-import 'package:flutter_music_app/music/service/admanager.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:palette_generator/palette_generator.dart';
@@ -58,10 +57,9 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   StreamSubscription<PlayerState>? _playerStateSub;
   StreamSubscription<MediaItem?>? _mediaItemSub;
   bool isPremium = false;
-  // int _songPlayCount = 0;
-  // bool _isShowingAd = false;
-  // Timer? _adTimer;
-  final adManager = AdManager()..loadAd();
+  int _songPlayCount = 0;
+  bool _isShowingAd = false;
+  Timer? _adTimer;
 
   @override
   void initState() {
@@ -147,17 +145,27 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     _imageAnimationController.dispose();
     _playerStateSub?.cancel();
     _mediaItemSub?.cancel();
-    // _adTimer?.cancel();
+    _adTimer?.cancel();
     super.dispose();
   }
 
   void _setupNotificationCallbacks() {
     // Setup callbacks for notification controls
     (globalAudioHandler as MyAudioHandler).setCallbacks(
-      onNext: _playNextSong,
-      onPrevious: _playPreviousSong,
-      onShuffle: _toggleShuffle,
-      onRepeat: _toggleRepeat,
+      onNext: () async {
+        debugPrint("Next from notification");
+        await _playNextSong();
+      },
+      onPrevious: () async {
+        debugPrint("Previous from notification");
+        await _playPreviousSong();
+      },
+      onShuffle: () {
+        _toggleShuffle();
+      },
+      onRepeat: () {
+        _toggleRepeat();
+      },
     );
   }
 
@@ -189,57 +197,67 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   // Hàm kiểm tra và hiển thị quảng cáo
-  Future<void> _checkAndShowAd() async {
-    if (isPremium == false) {
-      await adManager.showAdIfNeeded(() async {
-        debugPrint("📢 QUẢNG CÁO XONG → PHÁT NHẠC");
-        (globalAudioHandler as MyAudioHandler).player.play();
-      });
-    } else {
-      debugPrint("⭐ PREMIUM → PHÁT LUÔN");
-      (globalAudioHandler as MyAudioHandler).player.play();
+  void _checkAndShowAd() {
+    if (!isPremium) {
+      _songPlayCount++;
+      debugPrint('Song play count: $_songPlayCount');
+
+      // Hiển thị quảng cáo sau mỗi 3 bài hát
+      if (_songPlayCount % 3 == 0) {
+        _showInterstitialAd();
+      }
     }
   }
 
-  // void _showInterstitialAd() {
-  //   setState(() {
-  //     _isShowingAd = true;
-  //   });
+  void _showInterstitialAd() {
+    setState(() {
+      _isShowingAd = true;
+    });
 
-  //   // Tạm dừng nhạc khi hiển thị quảng cáo
-  //   (globalAudioHandler as MyAudioHandler).player.pause();
+    // Tạm dừng nhạc khi hiển thị quảng cáo
+    (globalAudioHandler as MyAudioHandler).player.pause();
 
-  //   // Tự động đóng quảng cáo sau 5 giây (hoặc có thể để user tự đóng)
-  //   _adTimer = Timer(const Duration(seconds: 5), () {
-  //     _hideAd();
-  //   });
-  // }
+    // Tự động đóng quảng cáo sau 5 giây (hoặc có thể để user tự đóng)
+    _adTimer = Timer(const Duration(seconds: 8), () {
+      _hideAd();
+    });
+  }
 
-  // void _hideAd() {
-  //   setState(() {
-  //     _isShowingAd = false;
-  //   });
-  //   _adTimer?.cancel();
+  void _hideAd() {
+    setState(() {
+      _isShowingAd = false;
+    });
+    _adTimer?.cancel();
 
-  //   // Tiếp tục phát nhạc sau khi đóng quảng cáo
-  //   (globalAudioHandler as MyAudioHandler).player.play();
-  // }
+    // Tiếp tục phát nhạc sau khi đóng quảng cáo
+    (globalAudioHandler as MyAudioHandler).player.play();
+  }
 
   Future<void> _initPlayer() async {
     // await audioPlayerManager.init(); // Đợi nhạc load xong
     // audioPlayerManager.player.play(); // Bắt đầu phát nhạc
     await _loadLyrics();
     await _generateColors();
-    // Create media item
-    final mediaItem = MediaItem(
-      id: currentSong.linkSong!,
-      title: currentSong.songName,
-      artist: currentSong.artistName,
-      artUri: Uri.parse(currentSong.songImage),
-      duration: null, // Will be updated when loaded
-    );
+    // Tạo toàn bộ queue từ danh sách bài hát
+    final mediaItems =
+        songs
+            .map(
+              (song) => MediaItem(
+                id: song.linkSong!,
+                title: song.songName,
+                artist: song.artistName,
+                artUri: Uri.parse(song.songImage),
+                duration: null,
+              ),
+            )
+            .toList();
     // Add to queue and play
-    await globalAudioHandler.addQueueItem(mediaItem);
+    // Set toàn bộ queue với bài hiện tại
+    await (globalAudioHandler as MyAudioHandler).setQueue(
+      mediaItems,
+      currentIndex,
+    );
+    await (globalAudioHandler as MyAudioHandler).play();
     (globalAudioHandler as MyAudioHandler).player.positionStream.listen(
       _updateCurrentLyric,
     );
@@ -259,17 +277,28 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     // Listen to media item changes (for notification updates)
     _mediaItemSub?.cancel();
     _mediaItemSub = globalAudioHandler.mediaItem.listen((mediaItem) {
-      if (mediaItem != null) {
+      if (mediaItem != null && mounted) {
         // Update current song if changed from notification
-        final newSong = songs.firstWhere(
+        // Tìm bài hát mới dựa trên mediaItem.id
+        final newSongIndex = songs.indexWhere(
           (song) => song.linkSong == mediaItem.id,
-          orElse: () => currentSong,
         );
-        if (newSong != currentSong) {
+        if (newSongIndex != -1 && newSongIndex != currentIndex) {
+          debugPrint("Media item changed: ${mediaItem.title}");
+
           setState(() {
-            currentSong = newSong;
-            currentIndex = songs.indexOf(newSong);
+            currentIndex = newSongIndex;
+            currentSong = songs[currentIndex];
           });
+          // final newSong = songs.firstWhere(
+          //   (song) => song.linkSong == mediaItem.id,
+          //   orElse: () => currentSong,
+          // );
+          // if (newSong != currentSong) {
+          //   setState(() {
+          //     currentSong = newSong;
+          //     currentIndex = songs.indexOf(newSong);
+          //   });
           _loadLyrics();
           _generateColors();
         }
@@ -278,52 +307,100 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   Future<void> _playNextSong() async {
-    if (currentIndex < songs.length - 1) {
-      setState(() {
-        currentIndex++;
-        currentSong =
-            _isShuffled ? shuffledList[currentIndex] : songs[currentIndex];
-      });
-      await _playSong(currentSong);
-      // _checkAndShowAd();
-    } else if (_loopMode == LoopMode.all) {
-      setState(() {
-        currentIndex = 0;
-        currentSong =
-            _isShuffled ? shuffledList[currentIndex] : songs[currentIndex];
-      });
-      await _playSong(currentSong);
-      // _checkAndShowAd();
+    if (_isNexting) return;
+    _isNexting = true;
+
+    try {
+      int nextIndex;
+      if (_isShuffled) {
+        nextIndex = shuffledList.indexOf(currentSong);
+        if (nextIndex < shuffledList.length - 1) {
+          nextIndex++;
+        } else if (_loopMode == LoopMode.all) {
+          nextIndex = 0;
+        } else {
+          return;
+        }
+        currentSong = shuffledList[nextIndex];
+        currentIndex = songs.indexOf(currentSong);
+      } else {
+        if (currentIndex < songs.length - 1) {
+          currentIndex++;
+        } else if (_loopMode == LoopMode.all) {
+          currentIndex = 0;
+        } else {
+          return;
+        }
+        currentSong = songs[currentIndex];
+      }
+
+      setState(() {});
+      // Sử dụng skipToIndex thay vì addQueueItem
+      await (globalAudioHandler as MyAudioHandler).skipToIndex(currentIndex);
+      await _loadLyrics();
+      await _generateColors();
+      _checkAndShowAd();
+    } finally {
+      _isNexting = false;
     }
   }
 
   Future<void> _playPreviousSong() async {
-    if (currentIndex > 0) {
-      setState(() {
-        currentIndex--;
-        currentSong =
-            _isShuffled ? shuffledList[currentIndex] : songs[currentIndex];
-      });
-      await _playSong(currentSong);
-      // _checkAndShowAd();
-    } else {
-      // Seek to beginning
-      await (globalAudioHandler as MyAudioHandler).player.seek(Duration.zero);
+    if (_isNexting) return;
+    _isNexting = true;
+
+    try {
+      int prevIndex;
+      if (_isShuffled) {
+        prevIndex = shuffledList.indexOf(currentSong);
+        if (prevIndex > 0) {
+          prevIndex--;
+          currentSong = shuffledList[prevIndex];
+          currentIndex = songs.indexOf(currentSong);
+        } else {
+          await (globalAudioHandler as MyAudioHandler).player.seek(
+            Duration.zero,
+          );
+          await (globalAudioHandler as MyAudioHandler).player.play();
+          return;
+        }
+      } else {
+        if (currentIndex > 0) {
+          currentIndex--;
+          currentSong = songs[currentIndex];
+        } else {
+          await (globalAudioHandler as MyAudioHandler).player.seek(
+            Duration.zero,
+          );
+          await (globalAudioHandler as MyAudioHandler).player.play();
+          return;
+        }
+      }
+
+      setState(() {});
+
+      // Sử dụng skipToIndex thay vì addQueueItem
+      await (globalAudioHandler as MyAudioHandler).skipToIndex(currentIndex);
+      await _loadLyrics();
+      await _generateColors();
+      _checkAndShowAd();
+    } finally {
+      _isNexting = false;
     }
   }
 
-  Future<void> _playSong(Song song) async {
-    final mediaItem = MediaItem(
-      id: song.linkSong!,
-      title: song.songName,
-      artist: song.artistName,
-      artUri: Uri.parse(song.songImage),
-    );
+  // Future<void> _playSong(Song song) async {
+  //   final mediaItem = MediaItem(
+  //     id: song.linkSong!,
+  //     title: song.songName,
+  //     artist: song.artistName,
+  //     artUri: Uri.parse(song.songImage),
+  //   );
 
-    await globalAudioHandler.addQueueItem(mediaItem);
-    await _loadLyrics();
-    await _generateColors();
-  }
+  //   await globalAudioHandler.addQueueItem(mediaItem);
+  //   await _loadLyrics();
+  //   await _generateColors();
+  // }
 
   void _toggleShuffle() {
     setState(() {
@@ -331,13 +408,16 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
       if (_isShuffled) {
         shuffledList = List.from(songs);
         shuffledList.shuffle();
-        currentIndex = shuffledList.indexOf(currentSong);
-      } else {
-        currentIndex = songs.indexOf(currentSong);
+        // Đảm bảo bài hiện tại vẫn đang phát
+        final currentSongInShuffled = shuffledList.indexOf(currentSong);
+        if (currentSongInShuffled != -1) {
+          // Đưa bài hiện tại lên đầu danh sách shuffle
+          shuffledList.removeAt(currentSongInShuffled);
+          shuffledList.insert(0, currentSong);
+        }
       }
     });
 
-    // Update handler state
     (globalAudioHandler as MyAudioHandler).updateShuffleState(_isShuffled);
   }
 
@@ -346,7 +426,6 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
       _loopMode = _getNextLoopMode();
     });
 
-    // Update handler state
     (globalAudioHandler as MyAudioHandler).updateRepeatState(_loopMode);
   }
 
@@ -479,85 +558,86 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     );
   }
 
-  // Widget _buildAdOverlay() {
-  //   return Container(
-  //     color: Colors.black.withOpacity(0.9),
-  //     child: Center(
-  //       child: Container(
-  //         margin: const EdgeInsets.all(20),
-  //         padding: const EdgeInsets.all(20),
-  //         decoration: BoxDecoration(
-  //           color: Colors.white,
-  //           borderRadius: BorderRadius.circular(12),
-  //         ),
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             const Icon(Icons.ads_click, size: 64, color: Colors.blue),
-  //             const SizedBox(height: 16),
-  //             const Text(
-  //               'Quảng cáo',
-  //               style: TextStyle(
-  //                 fontSize: 24,
-  //                 fontWeight: FontWeight.bold,
-  //                 color: Colors.black,
-  //               ),
-  //             ),
-  //             const SizedBox(height: 8),
-  //             const Text(
-  //               'Nâng cấp lên Premium để loại bỏ quảng cáo!',
-  //               textAlign: TextAlign.center,
-  //               style: TextStyle(fontSize: 16, color: Colors.grey),
-  //             ),
-  //             const SizedBox(height: 20),
-  //             // Có thể thêm banner quảng cáo thật ở đây
-  //             Container(
-  //               height: 100,
-  //               width: double.infinity,
-  //               decoration: BoxDecoration(
-  //                 gradient: const LinearGradient(
-  //                   colors: [Colors.blue, Colors.purple],
-  //                 ),
-  //                 borderRadius: BorderRadius.circular(8),
-  //               ),
-  //               child: const Center(
-  //                 child: Text(
-  //                   'Quảng cáo của bạn ở đây',
-  //                   style: TextStyle(
-  //                     color: Colors.white,
-  //                     fontSize: 16,
-  //                     fontWeight: FontWeight.bold,
-  //                   ),
-  //                 ),
-  //               ),
-  //             ),
-  //             const SizedBox(height: 20),
-  //             Row(
-  //               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-  //               children: [
-  //                 ElevatedButton(onPressed: _hideAd, child: const Text('Đóng')),
-  //                 ElevatedButton(
-  //                   onPressed: () {
-  //                     // TODO: Implement upgrade to premium
-  //                     _hideAd();
-  //                   },
-  //                   style: ElevatedButton.styleFrom(
-  //                     backgroundColor: Colors.blue,
-  //                     foregroundColor: Colors.white,
-  //                   ),
-  //                   child: const Text('Nâng cấp Premium'),
-  //                 ),
-  //               ],
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
+  Widget _buildAdOverlay() {
+    return Container(
+      color: Colors.black.withOpacity(0.9),
+      child: Center(
+        child: Container(
+          margin: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.ads_click, size: 64, color: Colors.blue),
+              const SizedBox(height: 16),
+              const Text(
+                'Quảng cáo',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Nâng cấp lên Premium để loại bỏ quảng cáo!',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+              const SizedBox(height: 20),
+              // Có thể thêm banner quảng cáo thật ở đây
+              Container(
+                height: 100,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Colors.blue, Colors.purple],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Center(
+                  child: Text(
+                    'Quảng cáo của bạn ở đây',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(onPressed: _hideAd, child: const Text('Đóng')),
+                  ElevatedButton(
+                    onPressed: () {
+                      // TODO: Implement upgrade to premium
+                      _hideAd();
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Nâng cấp Premium'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    debugPrint("Building UI with song: ${currentSong.songName}");
     Color bgColor = getSafeBackgroundColor(paletteGenerator, defaultColor);
 
     return Container(
@@ -604,7 +684,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               ],
             ),
             // Overlay quảng cáo
-            // if (_isShowingAd) _buildAdOverlay(),
+            if (_isShowingAd) _buildAdOverlay(),
           ],
         ),
       ),
@@ -847,33 +927,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               icon: const Icon(Icons.skip_previous, color: Colors.white),
               iconSize: 36,
               onPressed: () async {
-                if (currentIndex > 0) {
-                  setState(() {
-                    currentIndex--;
-                    if (_isShuffled) {
-                      currentSong = shuffledList[currentIndex];
-                    } else {
-                      currentSong = songs[currentIndex];
-                    }
-                  });
-                  await _loadLyrics();
-                  // await audioPlayerManager.playNewSong(currentSong.linkSong!);
-                  final mediaItem = MediaItem(
-                    id: currentSong.linkSong!, // hoặc link bài nhạc
-                    title: currentSong.songName,
-                    artist: currentSong.artistName,
-                    artUri: Uri.parse(currentSong.songImage),
-                  );
-                  globalAudioHandler.addQueueItem(mediaItem);
-                  // await showMusicNotification(currentSong, audioPlayerManager);
-                  // _checkAndShowAd();
-                } else {
-                  // ✅ Nếu đang ở bài đầu → phát lại bài hiện tại
-                  (globalAudioHandler as MyAudioHandler).player.seek(
-                    Duration.zero,
-                  );
-                  (globalAudioHandler as MyAudioHandler).player.play();
-                }
+                await _playPreviousSong();
               },
             ),
             StreamBuilder<PlayerState>(
@@ -918,32 +972,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               icon: const Icon(Icons.skip_next, color: Colors.white),
               iconSize: 36,
               onPressed: () async {
-                if (currentIndex < songs.length - 1) {
-                  setState(() {
-                    currentIndex++;
-                    if (_isShuffled) {
-                      currentSong = shuffledList[currentIndex];
-                    } else {
-                      currentSong = songs[currentIndex];
-                    }
-                  });
-                  await _loadLyrics();
-                  final mediaItem = MediaItem(
-                    id: currentSong.linkSong!, // hoặc link bài nhạc
-                    title: currentSong.songName,
-                    artist: currentSong.artistName,
-                    artUri: Uri.parse(currentSong.songImage),
-                  );
-                  globalAudioHandler.addQueueItem(mediaItem);
-                  // _checkAndShowAd();
-                  // await showMusicNotification(currentSong, audioPlayerManager);
-                } else {
-                  // ✅ Nếu đang ở bài đầu → phát lại bài hiện tại
-                  (globalAudioHandler as MyAudioHandler).player.seek(
-                    Duration.zero,
-                  );
-                  (globalAudioHandler as MyAudioHandler).player.play();
-                }
+                await _playNextSong();
               },
             ),
           ],
