@@ -10,6 +10,11 @@ import 'tabs/profile_tab.dart';
 import '../drawer/favorite_songs_screen.dart';
 import '../drawer/history_screen.dart';
 import '../drawer/downloaded_songs_screen.dart';
+import '../music/play_music/miniplayer.dart';
+import '../model/song.dart';
+import '../music/handle/audio_handler.dart';
+import '../music/play_music/playing_music.dart';
+import '../main.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,6 +30,8 @@ class _HomeScreenState extends State<HomeScreen>
   late AnimationController _animationController;
   late List<Animation<double>> _tabIconAnimations;
   int? userId;
+  Song? _currentSong;
+  bool _isPlaying = false;
   final List<Widget> _screens = [
     const HomeTab(),
     const SearchTab(),
@@ -55,6 +62,29 @@ class _HomeScreenState extends State<HomeScreen>
       ),
     );
     fetchUser();
+    // Lắng nghe trạng thái phát nhạc
+    (globalAudioHandler as MyAudioHandler).mediaItem.listen((mediaItem) {
+      if (mediaItem != null) {
+        setState(() {
+          _currentSong = Song(
+            songId:
+                int.tryParse(mediaItem.extras?['songId']?.toString() ?? '0') ??
+                0,
+            songName: mediaItem.title,
+            songImage: mediaItem.artUri.toString(),
+            artistName: mediaItem.artist,
+            linkSong: mediaItem.id,
+          );
+        });
+      }
+    });
+    (globalAudioHandler as MyAudioHandler).player.playerStateStream.listen((
+      state,
+    ) {
+      setState(() {
+        _isPlaying = state.playing;
+      });
+    });
   }
 
   Future<int?> getUserIdFromToken() async {
@@ -216,42 +246,99 @@ class _HomeScreenState extends State<HomeScreen>
         },
         children: _screens,
       ),
-      bottomNavigationBar: Container(
-        decoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: AppColors.divider, width: 0.5)),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Color(0x20000000)],
-          ),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          onTap: _onTabTapped,
-          type: BottomNavigationBarType.fixed,
-          backgroundColor: AppColors.primaryDark,
-          selectedItemColor: AppColors.primaryColor,
-          unselectedItemColor: AppColors.textSecondary,
-          items: List.generate(4, (index) {
-            final iconData =
-                [
-                  Icons.home,
-                  Icons.search,
-                  Icons.library_music,
-                  Icons.person,
-                ][index];
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_currentSong != null)
+            MiniPlayer(
+              song: _currentSong!,
+              isPlaying: _isPlaying,
+              onTap: () {
+                final queue =
+                    (globalAudioHandler as MyAudioHandler).queue.value;
+                final currentIndex =
+                    (globalAudioHandler as MyAudioHandler)
+                        .player
+                        .currentIndex ??
+                    0;
+                final songs =
+                    queue
+                        .map(
+                          (mediaItem) => Song(
+                            songId:
+                                int.tryParse(
+                                  mediaItem.extras?['songId']?.toString() ??
+                                      '0',
+                                ) ??
+                                0,
+                            songName: mediaItem.title,
+                            songImage: mediaItem.artUri.toString(),
+                            artistName: mediaItem.artist,
+                            linkSong: mediaItem.id,
+                          ),
+                        )
+                        .toList();
 
-            final label = ['Home', 'Search', 'Library', 'Profile'][index];
-
-            return BottomNavigationBarItem(
-              icon: ScaleTransition(
-                scale: _tabIconAnimations[index],
-                child: Icon(iconData),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => PlayingMusicInterface(
+                          songs: songs,
+                          currentIndex: currentIndex,
+                        ),
+                  ),
+                );
+              },
+              onPlayPause: () {
+                if (_isPlaying) {
+                  (globalAudioHandler as MyAudioHandler).pause();
+                } else {
+                  (globalAudioHandler as MyAudioHandler).play();
+                }
+              },
+              onNext: null, // Có thể bổ sung logic next bài
+            ),
+          Container(
+            decoration: const BoxDecoration(
+              border: Border(
+                top: BorderSide(color: AppColors.divider, width: 0.5),
               ),
-              label: label,
-            );
-          }),
-        ),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Color(0x20000000)],
+              ),
+            ),
+            child: BottomNavigationBar(
+              currentIndex: _currentIndex,
+              onTap: _onTabTapped,
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: AppColors.primaryDark,
+              selectedItemColor: AppColors.primaryColor,
+              unselectedItemColor: AppColors.textSecondary,
+              items: List.generate(4, (index) {
+                final iconData =
+                    [
+                      Icons.home,
+                      Icons.search,
+                      Icons.library_music,
+                      Icons.person,
+                    ][index];
+
+                final label = ['Home', 'Search', 'Library', 'Profile'][index];
+
+                return BottomNavigationBarItem(
+                  icon: ScaleTransition(
+                    scale: _tabIconAnimations[index],
+                    child: Icon(iconData),
+                  ),
+                  label: label,
+                );
+              }),
+            ),
+          ),
+        ],
       ),
     );
   }

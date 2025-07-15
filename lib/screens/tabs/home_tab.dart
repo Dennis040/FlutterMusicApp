@@ -10,6 +10,10 @@ import '../../library/artist_user_lib.dart';
 import '../../model/song.dart';
 import '../../model/album.dart';
 import 'album_songs_screen.dart';
+import '../../music/play_music/playing_music.dart';
+import '../../model/playlist.dart';
+import '../../library/playlist_user_lib.dart';
+import 'playlist_songs_screen.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({super.key});
@@ -29,13 +33,16 @@ class _HomeTabState extends State<HomeTab> {
   bool _isLoadingAlbums = true;
   int? userId;
 
+  List<Playlist> _playlists = [];
+  bool _isLoadingPlaylists = true;
+
   @override
   void initState() {
     super.initState();
     fetchArtists();
     fetchSuggestedSongs();
     fetchAlbums();
-    fetchUser();
+    fetchPlaylists();
   }
 
   Future<int?> getUserIdFromToken() async {
@@ -48,10 +55,6 @@ class _HomeTabState extends State<HomeTab> {
     final userId = decodedToken['nameid'];
 
     return int.tryParse(userId.toString());
-  }
-
-  Future<void> fetchUser() async {
-    userId = await getUserIdFromToken();
   }
 
   Future<void> fetchArtists() async {
@@ -118,6 +121,31 @@ class _HomeTabState extends State<HomeTab> {
     }
   }
 
+  Future<void> fetchPlaylists() async {
+    setState(() {
+      _isLoadingPlaylists = true;
+    });
+    try {
+      final response = await http.get(Uri.parse('${ip}Playlists'));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        final playlists = data.map((json) => Playlist.fromJson(json)).toList();
+        setState(() {
+          _playlists = playlists;
+          _isLoadingPlaylists = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingPlaylists = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingPlaylists = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
@@ -126,7 +154,7 @@ class _HomeTabState extends State<HomeTab> {
           floating: true,
           backgroundColor: AppColors.background,
           title: const Text(
-            'Good evening',
+            'Good a nice day',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           actions: [
@@ -210,6 +238,111 @@ class _HomeTabState extends State<HomeTab> {
                             },
                           ),
                 ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Danh sách phát',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                _isLoadingPlaylists
+                    ? const Center(child: CircularProgressIndicator())
+                    : _playlists.isEmpty
+                    ? const Text(
+                      'Bạn chưa có danh sách phát nào.',
+                      style: TextStyle(color: Colors.white70),
+                    )
+                    : GridView.builder(
+                      shrinkWrap: true,
+                      physics: NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 8,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 2.7,
+                          ),
+                      itemCount: _playlists.length,
+                      itemBuilder: (context, index) {
+                        final playlist = _playlists[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => PlaylistSongsScreen(
+                                      playlistId: playlist.playlistId,
+                                      playlistName: playlist.playlistName,
+                                      playlistImage: playlist.playlistImage,
+                                    ),
+                              ),
+                            );
+                          },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Stack(
+                              children: [
+                                Positioned.fill(
+                                  child: Image.network(
+                                    playlist.playlistImage,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (ctx, _, __) => Container(
+                                          color: Colors.grey[800],
+                                          child: const Icon(
+                                            Icons.queue_music,
+                                            color: Colors.white,
+                                            size: 36,
+                                          ),
+                                        ),
+                                  ),
+                                ),
+                                Positioned.fill(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Colors.transparent,
+                                          Colors.black.withOpacity(0.6),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Align(
+                                  alignment: Alignment.bottomLeft,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      playlist.playlistName,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15,
+                                        shadows: [
+                                          Shadow(
+                                            blurRadius: 4,
+                                            color: Colors.black,
+                                          ),
+                                        ],
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
                 const SizedBox(height: 32),
                 const Text(
                   'Album phổ biến',
@@ -312,7 +445,7 @@ class _HomeTabState extends State<HomeTab> {
                     ),
                 const SizedBox(height: 32),
                 const Text(
-                  'Top 10 bài hát lượt xem cao nhất',
+                  'Top 10 bài hát lượt nghe nhiều nhất',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -333,64 +466,80 @@ class _HomeTabState extends State<HomeTab> {
                                     : _suggestedSongs.length,
                             itemBuilder: (context, index) {
                               final song = _suggestedSongs[index];
-                              return Container(
-                                width: 140,
-                                margin: const EdgeInsets.only(right: 16),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surface,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    ClipRRect(
-                                      borderRadius: const BorderRadius.vertical(
-                                        top: Radius.circular(12),
-                                      ),
-                                      child: Image.network(
-                                        song.songImage,
-                                        width: 140,
-                                        height: 140,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (ctx, _, __) => const Icon(
-                                              Icons.music_note,
-                                              size: 40,
-                                              color: Colors.white,
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder:
+                                          (context) => PlayingMusicInterface(
+                                            songs: _suggestedSongs,
+                                            currentIndex: index,
+                                          ),
+                                    ),
+                                  );
+                                },
+                                child: Container(
+                                  width: 140,
+                                  margin: const EdgeInsets.only(right: 16),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ClipRRect(
+                                        borderRadius:
+                                            const BorderRadius.vertical(
+                                              top: Radius.circular(12),
                                             ),
-                                      ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 4,
-                                      ),
-                                      child: Text(
-                                        song.songName,
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                        child: Image.network(
+                                          song.songImage,
+                                          width: 140,
+                                          height: 140,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (ctx, _, __) => const Icon(
+                                                Icons.music_note,
+                                                size: 40,
+                                                color: Colors.white,
+                                              ),
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                      ),
-                                      child: Text(
-                                        song.artistName ?? '',
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.white70,
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                        child: Text(
+                                          song.songName,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                        ),
+                                        child: Text(
+                                          song.artistName ?? '',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.white70,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               );
                             },

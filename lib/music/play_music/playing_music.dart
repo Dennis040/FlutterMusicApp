@@ -234,11 +234,11 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   Future<void> _initPlayer() async {
-    // await audioPlayerManager.init(); // Đợi nhạc load xong
-    // audioPlayerManager.player.play(); // Bắt đầu phát nhạc
     await _loadLyrics();
     await _generateColors();
-    // Tạo toàn bộ queue từ danh sách bài hát
+    final audioHandler = globalAudioHandler as MyAudioHandler;
+    final currentQueue = audioHandler.queue.value;
+    final currentIdx = audioHandler.player.currentIndex ?? 0;
     final mediaItems =
         songs
             .map(
@@ -248,57 +248,40 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 artist: song.artistName,
                 artUri: Uri.parse(song.songImage),
                 duration: null,
+                extras: {'songId': song.songId},
               ),
             )
             .toList();
-    // Add to queue and play
-    // Set toàn bộ queue với bài hiện tại
-    await (globalAudioHandler as MyAudioHandler).setQueue(
-      mediaItems,
-      currentIndex,
-    );
-    await (globalAudioHandler as MyAudioHandler).play();
-    (globalAudioHandler as MyAudioHandler).player.positionStream.listen(
-      _updateCurrentLyric,
-    );
-    _playerStateSub?.cancel(); // hủy lắng nghe cũ
-
-    _playerStateSub = (globalAudioHandler as MyAudioHandler)
-        .player
-        .playerStateStream
-        .listen((state) {
-          if (state.processingState == ProcessingState.completed &&
-              !_isNexting) {
-            _isNexting = true;
-            _playNextSong().then((_) => _isNexting = false);
-          }
-        });
-
-    // Listen to media item changes (for notification updates)
+    bool isSameQueue =
+        currentQueue.length == mediaItems.length &&
+        List.generate(
+          currentQueue.length,
+          (i) => currentQueue[i].id == mediaItems[i].id,
+        ).every((e) => e);
+    if (!isSameQueue || currentIdx != currentIndex) {
+      await audioHandler.setQueue(mediaItems, currentIndex);
+      await audioHandler.play();
+    }
+    audioHandler.player.positionStream.listen(_updateCurrentLyric);
+    _playerStateSub?.cancel();
+    _playerStateSub = audioHandler.player.playerStateStream.listen((state) {
+      if (state.processingState == ProcessingState.completed && !_isNexting) {
+        _isNexting = true;
+        _playNextSong().then((_) => _isNexting = false);
+      }
+    });
     _mediaItemSub?.cancel();
     _mediaItemSub = globalAudioHandler.mediaItem.listen((mediaItem) {
       if (mediaItem != null && mounted) {
-        // Update current song if changed from notification
-        // Tìm bài hát mới dựa trên mediaItem.id
         final newSongIndex = songs.indexWhere(
           (song) => song.linkSong == mediaItem.id,
         );
         if (newSongIndex != -1 && newSongIndex != currentIndex) {
-          debugPrint("Media item changed: ${mediaItem.title}");
-
+          debugPrint("Media item changed: " + mediaItem.title);
           setState(() {
             currentIndex = newSongIndex;
             currentSong = songs[currentIndex];
           });
-          // final newSong = songs.firstWhere(
-          //   (song) => song.linkSong == mediaItem.id,
-          //   orElse: () => currentSong,
-          // );
-          // if (newSong != currentSong) {
-          //   setState(() {
-          //     currentSong = newSong;
-          //     currentIndex = songs.indexOf(newSong);
-          //   });
           _loadLyrics();
           _generateColors();
         }
