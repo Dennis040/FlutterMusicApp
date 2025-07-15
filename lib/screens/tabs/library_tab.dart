@@ -162,14 +162,17 @@ class _LibraryTabState extends State<LibraryTab> {
                               'Tạo danh sách phát gồm bài hát hoặc tập',
                               style: TextStyle(color: Colors.grey),
                             ),
-                            onTap: () {
+                            onTap: () async {
                               // Navigator.pop(context);
-                              Navigator.push(
+                              final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => CreatePlaylistScreen(),
                                 ),
                               );
+                              if (result == true) {
+                                fetchUserLibrary();
+                              }
                             },
                           ),
                           ListTile(
