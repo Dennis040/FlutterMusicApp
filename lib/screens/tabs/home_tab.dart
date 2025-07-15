@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/app_colors.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -25,6 +27,7 @@ class _HomeTabState extends State<HomeTab> {
 
   List<Album> _albums = [];
   bool _isLoadingAlbums = true;
+  int? userId;
 
   @override
   void initState() {
@@ -32,6 +35,23 @@ class _HomeTabState extends State<HomeTab> {
     fetchArtists();
     fetchSuggestedSongs();
     fetchAlbums();
+    fetchUser();
+  }
+  Future<int?> getUserIdFromToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('accessToken');
+
+    if (token == null || JwtDecoder.isExpired(token)) return null;
+
+    Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+    final userId = decodedToken['nameid'];
+
+    return int.tryParse(userId.toString());
+  }
+
+   Future<void> fetchUser() async {
+
+    userId = await getUserIdFromToken();
   }
 
   Future<void> fetchArtists() async {
@@ -160,6 +180,7 @@ class _HomeTabState extends State<HomeTab> {
                                             builder:
                                                 (context) => ArtistUserLib(
                                                   artistID: artist.artistId,
+                                                  userId: userId,
                                                 ),
                                           ),
                                         );

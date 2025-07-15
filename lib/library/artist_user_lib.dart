@@ -4,11 +4,18 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_music_app/model/song.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../config/config.dart';
 
 class ArtistUserLib extends StatefulWidget {
   final int artistID;
-  const ArtistUserLib({super.key, required this.artistID});
+  final int? userId;
+  const ArtistUserLib({
+    super.key,
+    required this.artistID,
+    required this.userId,
+  });
   @override
   State<ArtistUserLib> createState() => _ArtistScreenState();
 }
@@ -20,6 +27,7 @@ class _ArtistScreenState extends State<ArtistUserLib> {
   List<Song>? _songs = [];
   String? _artistImage;
   String? _artistName;
+  bool isFollowing = false;
 
   @override
   void initState() {
@@ -46,6 +54,15 @@ class _ArtistScreenState extends State<ArtistUserLib> {
         _artistName = value;
       });
     });
+    _checkFollow();
+  }
+
+  void _checkFollow() async {
+    try {
+      isFollowing = await checkUserFollowArtist(1, 2);
+    } catch (e) {
+      print('Lỗi: $e');
+    }
   }
 
   void _scrollListener() {
@@ -59,10 +76,27 @@ class _ArtistScreenState extends State<ArtistUserLib> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            PlayingMusicInterface(songs: _songs!, currentIndex: index),
+        builder:
+            (context) =>
+                PlayingMusicInterface(songs: _songs!, currentIndex: index),
       ),
     );
+  }
+
+  Future<bool> checkUserFollowArtist(int userId, int artistId) async {
+    final uri = Uri.parse(
+      '${ip}Artists/check?userId=$userId&artistId=$artistId',
+    );
+    // Lưu ý: dùng 10.0.2.2 nếu bạn chạy Flutter emulator để truy cập localhost
+
+    final response = await http.get(uri);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['isFollowing'] == true;
+    } else {
+      throw Exception('Failed to check follow status');
+    }
   }
 
   Future<List<Song>> fetchSongs() async {
@@ -79,17 +113,18 @@ class _ArtistScreenState extends State<ArtistUserLib> {
         final List<dynamic> data = jsonDecode(response.body);
         debugPrint("Parsed ${data.length} songs from API");
 
-        final songs = data.map((json) {
-          try {
-            final song = Song.fromJson(json);
-            debugPrint("Successfully parsed song: ${song.songName}");
-            return song;
-          } catch (e) {
-            debugPrint("Error parsing song: $e");
-            debugPrint("Problematic JSON: $json");
-            rethrow;
-          }
-        }).toList();
+        final songs =
+            data.map((json) {
+              try {
+                final song = Song.fromJson(json);
+                debugPrint("Successfully parsed song: ${song.songName}");
+                return song;
+              } catch (e) {
+                debugPrint("Error parsing song: $e");
+                debugPrint("Problematic JSON: $json");
+                rethrow;
+              }
+            }).toList();
 
         debugPrint("Total songs parsed: ${songs.length}");
         return songs;
@@ -158,7 +193,7 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                 ),
               ),
             ),
-          
+
           CustomScrollView(
             controller: _scrollController,
             slivers: [
@@ -188,7 +223,11 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(
-                      icon: Icon(Icons.more_vert, color: Colors.white, size: 20),
+                      icon: Icon(
+                        Icons.more_vert,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                       onPressed: () {},
                     ),
                   ),
@@ -214,19 +253,20 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                             ],
                           ),
                           child: ClipOval(
-                            child: _artistImage == null
-                                ? Container(
-                                    color: Colors.grey[800],
-                                    child: Icon(
-                                      Icons.person,
-                                      size: 100,
-                                      color: Colors.grey[600],
+                            child:
+                                _artistImage == null
+                                    ? Container(
+                                      color: Colors.grey[800],
+                                      child: Icon(
+                                        Icons.person,
+                                        size: 100,
+                                        color: Colors.grey[600],
+                                      ),
+                                    )
+                                    : Image.network(
+                                      _artistImage!,
+                                      fit: BoxFit.cover,
                                     ),
-                                  )
-                                : Image.network(
-                                    _artistImage!,
-                                    fit: BoxFit.cover,
-                                  ),
                           ),
                         ),
                       ],
@@ -234,7 +274,7 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                   ),
                 ),
               ),
-              
+
               // Artist info và controls
               SliverToBoxAdapter(
                 child: Container(
@@ -254,7 +294,7 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                         ),
                       ),
                       SizedBox(height: 8),
-                      
+
                       // Follower count (giả lập)
                       Text(
                         '${(_songs?.length ?? 0) * 12847} monthly listeners',
@@ -264,9 +304,9 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                           fontWeight: FontWeight.w500,
                         ),
                       ),
-                      
+
                       SizedBox(height: 32),
-                      
+
                       // Control buttons
                       Row(
                         children: [
@@ -280,7 +320,7 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                             ),
                             child: Center(
                               child: Text(
-                                'Follow',
+                                isFollowing ? 'Đang theo dõi' : 'Theo dõi',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
@@ -289,9 +329,9 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                               ),
                             ),
                           ),
-                          
+
                           SizedBox(width: 16),
-                          
+
                           // More options
                           Container(
                             width: 32,
@@ -306,9 +346,9 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                               onPressed: () {},
                             ),
                           ),
-                          
+
                           Spacer(),
-                          
+
                           // Shuffle button
                           Container(
                             width: 32,
@@ -323,9 +363,9 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                               onPressed: () {},
                             ),
                           ),
-                          
+
                           SizedBox(width: 16),
-                          
+
                           // Play button
                           Container(
                             width: 56,
@@ -349,9 +389,9 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                           ),
                         ],
                       ),
-                      
+
                       SizedBox(height: 32),
-                      
+
                       // Popular section
                       Text(
                         'Popular',
@@ -361,42 +401,37 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                           color: Colors.white,
                         ),
                       ),
-                      
+
                       SizedBox(height: 16),
                     ],
                   ),
                 ),
               ),
-              
+
               // Songs list
               SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    if (_songs == null || _songs!.isEmpty) {
-                      return Container(
-                        height: 200,
-                        child: Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFF1DB954),
-                          ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  if (_songs == null || _songs!.isEmpty) {
+                    return Container(
+                      height: 200,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF1DB954),
                         ),
-                      );
-                    }
-                    
-                    final song = _songs![index];
-                    return _buildTrackItem(song, index);
-                  },
-                  childCount: _songs?.length ?? 1,
-                ),
+                      ),
+                    );
+                  }
+
+                  final song = _songs![index];
+                  return _buildTrackItem(song, index);
+                }, childCount: _songs?.length ?? 1),
               ),
-              
+
               // Bottom padding
-              SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ),
+              SliverToBoxAdapter(child: SizedBox(height: 100)),
             ],
           ),
-          
+
           // Sticky header khi scroll
           if (_showStickyHeader)
             Positioned(
@@ -417,25 +452,27 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                           icon: Icon(Icons.arrow_back, color: Colors.white),
                           onPressed: () => Navigator.pop(context),
                         ),
-                        
+
                         SizedBox(width: 16),
-                        
+
                         // Mini artist image
                         Container(
                           width: 32,
                           height: 32,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                          ),
+                          decoration: BoxDecoration(shape: BoxShape.circle),
                           child: ClipOval(
-                            child: _artistImage == null
-                                ? Container(color: Colors.grey[800])
-                                : Image.network(_artistImage!, fit: BoxFit.cover),
+                            child:
+                                _artistImage == null
+                                    ? Container(color: Colors.grey[800])
+                                    : Image.network(
+                                      _artistImage!,
+                                      fit: BoxFit.cover,
+                                    ),
                           ),
                         ),
-                        
+
                         SizedBox(width: 16),
-                        
+
                         Expanded(
                           child: Text(
                             _artistName ?? '',
@@ -447,13 +484,13 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        
+
                         // Mini controls
                         IconButton(
                           icon: Icon(Icons.shuffle, color: Colors.grey[400]),
                           onPressed: () {},
                         ),
-                        
+
                         Container(
                           width: 32,
                           height: 32,
@@ -504,9 +541,9 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                     ),
                   ),
                 ),
-                
+
                 SizedBox(width: 16),
-                
+
                 // Song image
                 Container(
                   width: 40,
@@ -519,9 +556,9 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                     ),
                   ),
                 ),
-                
+
                 SizedBox(width: 16),
-                
+
                 // Song info
                 Expanded(
                   child: Column(
@@ -536,7 +573,8 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (song.artistName != null && song.artistName!.isNotEmpty)
+                      if (song.artistName != null &&
+                          song.artistName!.isNotEmpty)
                         Text(
                           song.artistName!,
                           style: TextStyle(
@@ -548,18 +586,15 @@ class _ArtistScreenState extends State<ArtistUserLib> {
                     ],
                   ),
                 ),
-                
+
                 // Play count (giả lập)
                 Text(
                   '${(index + 1) * 1234567}',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[400],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[400]),
                 ),
-                
+
                 SizedBox(width: 16),
-                
+
                 // More options
                 IconButton(
                   icon: Icon(

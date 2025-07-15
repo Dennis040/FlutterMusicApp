@@ -23,6 +23,7 @@ class _LibraryTabState extends State<LibraryTab> {
   List<PlaylistUser> _playlists = [];
   List<Artist> _artists = [];
   bool _isLoading = true;
+  late int? userId;
 
   @override
   void initState() {
@@ -48,7 +49,7 @@ class _LibraryTabState extends State<LibraryTab> {
       _isLoading = true;
     });
 
-    final userId = await getUserIdFromToken();
+    userId = await getUserIdFromToken();
     debugPrint('UserId: $userId');
     
     try {
@@ -216,7 +217,7 @@ class _LibraryTabState extends State<LibraryTab> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ArtistUserLib(artistID: artist.artistId),
+            builder: (context) => ArtistUserLib(artistID: artist.artistId, userId: userId),
           ),
         );
       },
