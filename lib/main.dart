@@ -9,6 +9,7 @@ import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'screens/splash_screen.dart';
 
 Future<void> requestNotificationPermission() async {
   final status = await Permission.notification.request();
@@ -116,7 +117,7 @@ class MyApp extends StatelessWidget {
             );
         }
       },
-      home: const StartScreen(),
+      home: const SplashScreen(),
     );
   }
 }
