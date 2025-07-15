@@ -51,23 +51,25 @@ class _LibraryTabState extends State<LibraryTab> {
 
     userId = await getUserIdFromToken();
     debugPrint('UserId: $userId');
-    
+
     try {
       final response = await http.get(Uri.parse('${ip}Users/$userId/lib'));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        final playlists = (data['playlists'] as List)
-            .map((e) => PlaylistUser.fromJson(e))
-            .toList();
-        final artists = (data['favoriteArtists'] as List)
-            .map((e) => Artist.fromJson(e))
-            .toList();
+        final playlists =
+            (data['playlists'] as List)
+                .map((e) => PlaylistUser.fromJson(e))
+                .toList();
+        final artists =
+            (data['favoriteArtists'] as List)
+                .map((e) => Artist.fromJson(e))
+                .toList();
 
         debugPrint('Playlists count: ${playlists.length}');
         debugPrint('Artists count: ${artists.length}');
-        
+
         setState(() {
           _playlists = playlists;
           _artists = artists;
@@ -101,14 +103,16 @@ class _LibraryTabState extends State<LibraryTab> {
   Widget _buildEmptyState() {
     String message;
     IconData icon;
-    
+
     switch (_selectedFilter) {
       case 0:
-        message = 'Bạn chưa có danh sách phát nào\nTạo danh sách phát đầu tiên của bạn!';
+        message =
+            'Bạn chưa có danh sách phát nào\nTạo danh sách phát đầu tiên của bạn!';
         icon = Icons.queue_music;
         break;
       case 1:
-        message = 'Bạn chưa theo dõi nghệ sĩ nào\nHãy khám phá và theo dõi nghệ sĩ yêu thích!';
+        message =
+            'Bạn chưa theo dõi nghệ sĩ nào\nHãy khám phá và theo dõi nghệ sĩ yêu thích!';
         icon = Icons.person;
         break;
       default:
@@ -122,11 +126,7 @@ class _LibraryTabState extends State<LibraryTab> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 64,
-              color: Colors.grey.shade600,
-            ),
+            Icon(icon, size: 64, color: Colors.grey.shade600),
             const SizedBox(height: 16),
             Text(
               message,
@@ -152,11 +152,7 @@ class _LibraryTabState extends State<LibraryTab> {
           color: Colors.grey[300],
           borderRadius: BorderRadius.circular(4),
         ),
-        child: const Icon(
-          Icons.queue_music,
-          size: 28,
-          color: Colors.black54,
-        ),
+        child: const Icon(Icons.queue_music, size: 28, color: Colors.black54),
       ),
       title: Text(
         playlist.name,
@@ -167,19 +163,17 @@ class _LibraryTabState extends State<LibraryTab> {
       ),
       subtitle: Text(
         'Danh sách phát',
-        style: TextStyle(
-          color: Colors.grey.shade600,
-          fontSize: 12,
-        ),
+        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
       ),
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PlaylistUserLib(
-              playlistID: playlist.id,
-              playlistName: playlist.name,
-            ),
+            builder:
+                (context) => PlaylistUserLib(
+                  playlistID: playlist.id,
+                  playlistName: playlist.name,
+                ),
           ),
         );
       },
@@ -208,16 +202,15 @@ class _LibraryTabState extends State<LibraryTab> {
       ),
       subtitle: Text(
         'Nghệ sĩ',
-        style: TextStyle(
-          color: Colors.grey.shade600,
-          fontSize: 12,
-        ),
+        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
       ),
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ArtistUserLib(artistID: artist.artistId, userId: userId),
+            builder:
+                (context) =>
+                    ArtistUserLib(artistID: artist.artistId, userId: userId),
           ),
         );
       },
@@ -374,15 +367,17 @@ class _LibraryTabState extends State<LibraryTab> {
                   shape: const StadiumBorder(),
                   showCheckmark: false,
                   side: BorderSide(
-                    color: _selectedFilter == 0
-                        ? AppColors.primaryColor
-                        : Colors.grey.shade400,
+                    color:
+                        _selectedFilter == 0
+                            ? AppColors.primaryColor
+                            : Colors.grey.shade400,
                     width: 1.5,
                   ),
                   labelStyle: TextStyle(
-                    color: _selectedFilter == 0
-                        ? AppColors.primaryColor
-                        : AppColors.textPrimary,
+                    color:
+                        _selectedFilter == 0
+                            ? AppColors.primaryColor
+                            : AppColors.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -402,15 +397,17 @@ class _LibraryTabState extends State<LibraryTab> {
                   shape: const StadiumBorder(),
                   showCheckmark: false,
                   side: BorderSide(
-                    color: _selectedFilter == 1
-                        ? AppColors.primaryColor
-                        : Colors.grey.shade400,
+                    color:
+                        _selectedFilter == 1
+                            ? AppColors.primaryColor
+                            : Colors.grey.shade400,
                     width: 1.5,
                   ),
                   labelStyle: TextStyle(
-                    color: _selectedFilter == 1
-                        ? AppColors.primaryColor
-                        : AppColors.textPrimary,
+                    color:
+                        _selectedFilter == 1
+                            ? AppColors.primaryColor
+                            : AppColors.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -430,29 +427,26 @@ class _LibraryTabState extends State<LibraryTab> {
           _buildEmptyState()
         else
           SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final item = _filteredItems[index];
-                
-                Widget tile;
-                if (item is PlaylistUser) {
-                  tile = _buildPlaylistTile(item);
-                } else if (item is Artist) {
-                  tile = _buildArtistTile(item);
-                } else {
-                  return const SizedBox.shrink();
-                }
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final item = _filteredItems[index];
 
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12.0,
-                    vertical: 4.0,
-                  ),
-                  child: tile,
-                );
-              },
-              childCount: _filteredItems.length,
-            ),
+              Widget tile;
+              if (item is PlaylistUser) {
+                tile = _buildPlaylistTile(item);
+              } else if (item is Artist) {
+                tile = _buildArtistTile(item);
+              } else {
+                return const SizedBox.shrink();
+              }
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 4.0,
+                ),
+                child: tile,
+              );
+            }, childCount: _filteredItems.length),
           ),
       ],
     );

@@ -3,18 +3,12 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_music_app/config/config.dart';
 
 class ChatService {
-  
   static Future<ChatResponse> sendMessage(String message, {int? userId}) async {
     try {
       final response = await http.post(
         Uri.parse('${ip}chat'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          'message': message,
-          'userId': userId,
-        }),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({'message': message, 'userId': userId}),
       );
 
       if (response.statusCode == 200) {

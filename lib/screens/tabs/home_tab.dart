@@ -37,6 +37,7 @@ class _HomeTabState extends State<HomeTab> {
     fetchAlbums();
     fetchUser();
   }
+
   Future<int?> getUserIdFromToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('accessToken');
@@ -49,8 +50,7 @@ class _HomeTabState extends State<HomeTab> {
     return int.tryParse(userId.toString());
   }
 
-   Future<void> fetchUser() async {
-
+  Future<void> fetchUser() async {
     userId = await getUserIdFromToken();
   }
 
@@ -149,7 +149,7 @@ class _HomeTabState extends State<HomeTab> {
               children: [
                 // --- Nghệ sĩ phổ biến ---
                 const Text(
-                  'Nghệ sĩ phổ biến',
+                  'Nghệ sĩ nổi bật',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -212,7 +212,7 @@ class _HomeTabState extends State<HomeTab> {
                 ),
                 const SizedBox(height: 32),
                 const Text(
-                  'Album nổi bật',
+                  'Album phổ biến',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,

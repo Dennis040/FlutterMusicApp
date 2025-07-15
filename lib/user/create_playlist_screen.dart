@@ -251,7 +251,10 @@ class _CreatePlaylistScreenState extends State<CreatePlaylistScreen> {
                                     TextButton(
                                       onPressed: () {
                                         Navigator.pop(context); // đóng dialog
-                                        Navigator.pop(context, true);// quay về trang trước
+                                        Navigator.pop(
+                                          context,
+                                          true,
+                                        ); // quay về trang trước
                                       },
                                       child: const Text('OK'),
                                     ),

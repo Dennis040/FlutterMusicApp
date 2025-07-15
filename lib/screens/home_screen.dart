@@ -56,7 +56,8 @@ class _HomeScreenState extends State<HomeScreen>
     );
     fetchUser();
   }
-   Future<int?> getUserIdFromToken() async {
+
+  Future<int?> getUserIdFromToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('accessToken');
 
@@ -68,8 +69,7 @@ class _HomeScreenState extends State<HomeScreen>
     return int.tryParse(userId.toString());
   }
 
-   Future<void> fetchUser() async {
-
+  Future<void> fetchUser() async {
     userId = await getUserIdFromToken();
   }
 

@@ -5,13 +5,13 @@ import 'package:flutter_music_app/chatbox/quickaction.dart';
 
 class MusicChatScreen extends StatefulWidget {
   final int? userId;
-  const MusicChatScreen({super.key,required this.userId});
+  const MusicChatScreen({super.key, required this.userId});
 
   @override
   State<MusicChatScreen> createState() => _MusicChatScreenState();
 }
 
-class _MusicChatScreenState extends State<MusicChatScreen> 
+class _MusicChatScreenState extends State<MusicChatScreen>
     with TickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -27,7 +27,7 @@ class _MusicChatScreenState extends State<MusicChatScreen>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _addWelcomeMessage();
   }
 
@@ -42,7 +42,8 @@ class _MusicChatScreenState extends State<MusicChatScreen>
   void _addWelcomeMessage() {
     _addMessage(
       ChatMessage(
-        text: "Xin chào! Tôi là Music AI Assistant 🎵\n\nTôi có thể giúp bạn:\n• Tìm kiếm bài hát và nghệ sĩ\n• Gợi ý nhạc phù hợp\n• Thống kê và phân tích\n• Trả lời các câu hỏi về âm nhạc\n\nHãy thử các câu hỏi gợi ý bên dưới!",
+        text:
+            "Xin chào! Tôi là Music AI Assistant 🎵\n\nTôi có thể giúp bạn:\n• Tìm kiếm bài hát và nghệ sĩ\n• Gợi ý nhạc phù hợp\n• Thống kê và phân tích\n• Trả lời các câu hỏi về âm nhạc\n\nHãy thử các câu hỏi gợi ý bên dưới!",
         isUser: false,
         timestamp: DateTime.now(),
       ),
@@ -71,11 +72,9 @@ class _MusicChatScreenState extends State<MusicChatScreen>
     }
 
     // Add user message
-    _addMessage(ChatMessage(
-      text: userMessage,
-      isUser: true,
-      timestamp: DateTime.now(),
-    ));
+    _addMessage(
+      ChatMessage(text: userMessage, isUser: true, timestamp: DateTime.now()),
+    );
 
     setState(() {
       _isLoading = true;
@@ -84,27 +83,35 @@ class _MusicChatScreenState extends State<MusicChatScreen>
     try {
       // Call your API here
       final response = await ChatService.sendMessage(userMessage);
-      
+
       if (response.success) {
-        _addMessage(ChatMessage(
-          text: response.reply,
-          isUser: false,
-          timestamp: DateTime.now(),
-          hasContext: response.hasMusicContext,
-        ));
+        _addMessage(
+          ChatMessage(
+            text: response.reply,
+            isUser: false,
+            timestamp: DateTime.now(),
+            hasContext: response.hasMusicContext,
+          ),
+        );
       } else {
-        _addMessage(ChatMessage(
-          text: response.error ?? 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.',
-          isUser: false,
-          timestamp: DateTime.now(),
-        ));
+        _addMessage(
+          ChatMessage(
+            text:
+                response.error ??
+                'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.',
+            isUser: false,
+            timestamp: DateTime.now(),
+          ),
+        );
       }
     } catch (e) {
-      _addMessage(ChatMessage(
-        text: 'Lỗi kết nối. Vui lòng kiểm tra internet và thử lại.',
-        isUser: false,
-        timestamp: DateTime.now(),
-      ));
+      _addMessage(
+        ChatMessage(
+          text: 'Lỗi kết nối. Vui lòng kiểm tra internet và thử lại.',
+          isUser: false,
+          timestamp: DateTime.now(),
+        ),
+      );
     } finally {
       setState(() {
         _isLoading = false;
@@ -116,9 +123,9 @@ class _MusicChatScreenState extends State<MusicChatScreen>
     setState(() {
       _messages.add(message);
     });
-    
+
     _animationController.forward();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
@@ -169,10 +176,7 @@ class _MusicChatScreenState extends State<MusicChatScreen>
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFFF8F9FA),
-                    Color(0xFFE9ECEF),
-                  ],
+                  colors: [Color(0xFFF8F9FA), Color(0xFFE9ECEF)],
                 ),
               ),
               child: ListView.builder(
@@ -188,10 +192,12 @@ class _MusicChatScreenState extends State<MusicChatScreen>
                           position: Tween<Offset>(
                             begin: const Offset(0, 0.3),
                             end: Offset.zero,
-                          ).animate(CurvedAnimation(
-                            parent: _animationController,
-                            curve: Curves.easeOut,
-                          )),
+                          ).animate(
+                            CurvedAnimation(
+                              parent: _animationController,
+                              curve: Curves.easeOut,
+                            ),
+                          ),
                           child: FadeTransition(
                             opacity: _animationController,
                             child: QuickActionsWidget(
@@ -210,7 +216,7 @@ class _MusicChatScreenState extends State<MusicChatScreen>
               ),
             ),
           ),
-          
+
           // Loading indicator
           if (_isLoading)
             Container(
@@ -238,7 +244,7 @@ class _MusicChatScreenState extends State<MusicChatScreen>
                 ],
               ),
             ),
-          
+
           // Input area
           Container(
             padding: const EdgeInsets.all(16),
@@ -270,15 +276,16 @@ class _MusicChatScreenState extends State<MusicChatScreen>
                           horizontal: 20,
                           vertical: 12,
                         ),
-                        suffixIcon: _messageController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  _messageController.clear();
-                                  setState(() {});
-                                },
-                              )
-                            : null,
+                        suffixIcon:
+                            _messageController.text.isNotEmpty
+                                ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _messageController.clear();
+                                    setState(() {});
+                                  },
+                                )
+                                : null,
                       ),
                       onSubmitted: (_) => _sendMessage(),
                       enabled: !_isLoading,
@@ -290,9 +297,8 @@ class _MusicChatScreenState extends State<MusicChatScreen>
                   const SizedBox(width: 12),
                   FloatingActionButton(
                     onPressed: _isLoading ? null : _sendMessage,
-                    backgroundColor: _isLoading 
-                        ? Colors.grey 
-                        : Colors.deepPurple,
+                    backgroundColor:
+                        _isLoading ? Colors.grey : Colors.deepPurple,
                     child: const Icon(Icons.send, color: Colors.white),
                     mini: true,
                   ),
@@ -333,23 +339,17 @@ class _AnimatedChatBubbleState extends State<AnimatedChatBubble>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    ));
-    
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOut,
-    ));
-    
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
     _controller.forward();
   }
 
@@ -381,9 +381,8 @@ class ChatBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: message.isUser 
-            ? MainAxisAlignment.end 
-            : MainAxisAlignment.start,
+        mainAxisAlignment:
+            message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           if (!message.isUser) ...[
             Container(
@@ -396,16 +395,12 @@ class ChatBubble extends StatelessWidget {
               child: const CircleAvatar(
                 backgroundColor: Colors.transparent,
                 radius: 16,
-                child: Icon(
-                  Icons.smart_toy,
-                  color: Colors.white,
-                  size: 16,
-                ),
+                child: Icon(Icons.smart_toy, color: Colors.white, size: 16),
               ),
             ),
             const SizedBox(width: 8),
           ],
-          
+
           Flexible(
             child: GestureDetector(
               onLongPress: () {
@@ -417,11 +412,12 @@ class ChatBubble extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  gradient: message.isUser 
-                      ? const LinearGradient(
-                          colors: [Colors.deepPurple, Colors.purple],
-                        )
-                      : null,
+                  gradient:
+                      message.isUser
+                          ? const LinearGradient(
+                            colors: [Colors.deepPurple, Colors.purple],
+                          )
+                          : null,
                   color: message.isUser ? null : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
@@ -451,18 +447,20 @@ class ChatBubble extends StatelessWidget {
                           Icon(
                             Icons.music_note,
                             size: 12,
-                            color: message.isUser 
-                                ? Colors.white70 
-                                : Colors.deepPurple,
+                            color:
+                                message.isUser
+                                    ? Colors.white70
+                                    : Colors.deepPurple,
                           ),
                           const SizedBox(width: 4),
                         ],
                         Text(
                           '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
                           style: TextStyle(
-                            color: message.isUser 
-                                ? Colors.white70 
-                                : Colors.grey[600],
+                            color:
+                                message.isUser
+                                    ? Colors.white70
+                                    : Colors.grey[600],
                             fontSize: 12,
                           ),
                         ),
@@ -473,17 +471,13 @@ class ChatBubble extends StatelessWidget {
               ),
             ),
           ),
-          
+
           if (message.isUser) ...[
             const SizedBox(width: 8),
             CircleAvatar(
               backgroundColor: Colors.grey[400],
               radius: 16,
-              child: const Icon(
-                Icons.person,
-                color: Colors.white,
-                size: 16,
-              ),
+              child: const Icon(Icons.person, color: Colors.white, size: 16),
             ),
           ],
         ],
