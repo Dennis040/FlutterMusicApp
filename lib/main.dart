@@ -11,6 +11,8 @@ import 'screens/home_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'screens/splash_screen.dart';
 
+final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
 Future<void> requestNotificationPermission() async {
   final status = await Permission.notification.request();
   if (status.isGranted) {
@@ -93,6 +95,7 @@ class MyApp extends StatelessWidget {
           bodyMedium: TextStyle(color: AppColors.textSecondary, fontSize: 14),
         ),
       ),
+      navigatorObservers: [routeObserver],
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/login':

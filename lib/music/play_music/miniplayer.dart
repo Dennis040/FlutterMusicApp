@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../model/song.dart';
+import '../../constants/app_colors.dart';
 
 class MiniPlayer extends StatelessWidget {
   final Song song;
@@ -105,7 +106,7 @@ class MiniPlayer extends StatelessWidget {
                             isPlaying
                                 ? Icons.pause_circle_filled
                                 : Icons.play_circle_filled,
-                            color: Colors.pinkAccent,
+                            color: AppColors.primaryColor,
                             size: 30,
                           ),
                           onPressed: onPlayPause,
@@ -115,7 +116,7 @@ class MiniPlayer extends StatelessWidget {
                         IconButton(
                           icon: const Icon(
                             Icons.skip_next,
-                            color: Colors.pinkAccent,
+                            color: AppColors.primaryColor,
                             size: 22,
                           ),
                           onPressed: onNext,

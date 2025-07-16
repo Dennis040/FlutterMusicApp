@@ -60,6 +60,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   int _songPlayCount = 0;
   bool _isShowingAd = false;
   Timer? _adTimer;
+  bool isFavorite = false;
 
   @override
   void initState() {
@@ -96,6 +97,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     _setupNotificationCallbacks();
     fetchUserProfile();
     _checkAndShowAd();
+    checkFavorite();
   }
 
   Future<int?> getUserIdFromToken() async {
@@ -135,6 +137,44 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
       }
     } else {
       debugPrint('Error fetching profile: ${response.statusCode}');
+    }
+  }
+
+  Future<void> checkFavorite() async {
+    final userId = await getUserIdFromToken();
+    final response = await http.get(
+      Uri.parse('${ip}Users/$userId/favorite-songs'),
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      setState(() {
+        isFavorite = data.any((json) => json['songId'] == currentSong.songId);
+      });
+    }
+  }
+
+  Future<void> toggleFavorite() async {
+    final userId = await getUserIdFromToken();
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('accessToken');
+    final url = Uri.parse(
+      '${ip}Users/$userId/favorite-songs/${currentSong.songId}',
+    );
+    final headers = token != null ? {'Authorization': 'Bearer $token'} : null;
+    debugPrint(
+      'Toggle favorite: userId=$userId, songId=${currentSong.songId}, isFavorite=$isFavorite',
+    );
+    final response =
+        isFavorite
+            ? await http.delete(url, headers: headers)
+            : await http.post(url, headers: headers);
+    debugPrint('Status: ${response.statusCode}, Body: ${response.body}');
+    if (response.statusCode == 200 ||
+        response.statusCode == 201 ||
+        response.statusCode == 204) {
+      setState(() {
+        isFavorite = !isFavorite;
+      });
     }
   }
 
@@ -284,6 +324,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
           });
           _loadLyrics();
           _generateColors();
+          checkFavorite(); // Gọi lại khi đổi bài
         }
       }
     });
@@ -644,10 +685,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
           ),
           centerTitle: true,
           actions: [
-            IconButton(
-              icon: const Icon(Icons.more_vert, color: Colors.white),
-              onPressed: () {},
-            ),
+            // Xóa IconButton yêu thích ở AppBar actions (nếu có)
           ],
         ),
         body: Stack(
@@ -753,9 +791,36 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.favorite_border, color: Colors.white),
-            onPressed: () {
-              // TODO: Xử lý khi nhấn yêu thích
+            icon: Icon(
+              isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: isFavorite ? Colors.pink : Colors.white,
+            ),
+            onPressed: () async {
+              final userId = await getUserIdFromToken();
+              final prefs = await SharedPreferences.getInstance();
+              final token = prefs.getString('accessToken');
+              final url = Uri.parse(
+                '${ip}Users/$userId/favorite-songs/${currentSong.songId}',
+              );
+              final headers =
+                  token != null ? {'Authorization': 'Bearer $token'} : null;
+              debugPrint(
+                'Toggle favorite: userId=$userId, songId=${currentSong.songId}, isFavorite=$isFavorite',
+              );
+              final response =
+                  isFavorite
+                      ? await http.delete(url, headers: headers)
+                      : await http.post(url, headers: headers);
+              debugPrint(
+                'Status: ${response.statusCode}, Body: ${response.body}',
+              );
+              if (response.statusCode == 200 ||
+                  response.statusCode == 201 ||
+                  response.statusCode == 204) {
+                setState(() {
+                  isFavorite = !isFavorite;
+                });
+              }
             },
           ),
         ],
