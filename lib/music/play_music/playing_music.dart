@@ -80,6 +80,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     songs = widget.songs;
     currentIndex = widget.currentIndex;
     currentSong = songs[currentIndex];
+    addSongToHistory(currentSong); // Ghi nhận lịch sử ngay khi mở player
     _initPlayer();
     _generateColors();
     _setupNotificationCallbacks();
@@ -313,6 +314,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
           _loadLyrics();
           _generateColors();
           checkFavorite(); // Gọi lại khi đổi bài
+          addSongToHistory(currentSong); // Lưu lịch sử nghe nhạc
         }
       }
     });
@@ -814,7 +816,7 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
               if (isPremium)
                 IconButton(
                   icon: Icon(Icons.download, color: Colors.white, size: 24),
-                  onPressed: (){},//_downloadSong,
+                  onPressed: () {}, //_downloadSong,
                   tooltip: 'Tải xuống',
                 ),
               const SizedBox(width: 4),
@@ -1196,5 +1198,49 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
 
   LoopMode _getNextLoopMode() {
     return _loopMode == LoopMode.off ? LoopMode.one : LoopMode.off;
+  }
+
+  Future<void> addSongToHistory(Song song) async {
+    // Gọi API backend để lưu lịch sử
+    final userId = await getUserIdFromToken();
+    if (userId != null) {
+      try {
+        await http.post(Uri.parse('${ip}Users/$userId/history/${song.songId}'));
+      } catch (e) {
+        debugPrint('Lỗi lưu lịch sử backend: $e');
+      }
+    }
+    // (Có thể giữ lại đoạn lưu local nếu muốn)
+    final prefs = await SharedPreferences.getInstance();
+    final historyJson = prefs.getStringList('music_history') ?? [];
+    List<Song> history =
+        historyJson
+            .map((e) {
+              try {
+                return Song.fromJson(Map<String, dynamic>.from(jsonDecode(e)));
+              } catch (_) {
+                return null;
+              }
+            })
+            .whereType<Song>()
+            .toList();
+    history.removeWhere((s) => s.songId == song.songId);
+    history.insert(0, song);
+    if (history.length > 50) history = history.sublist(0, 50);
+    final newJson =
+        history
+            .map(
+              (s) => jsonEncode({
+                'songId': s.songId,
+                'songName': s.songName,
+                'songImage': s.songImage,
+                'linkSong': s.linkSong,
+                'linkLrc': s.linkLrc,
+                'views': s.views,
+                'artistName': s.artistName,
+              }),
+            )
+            .toList();
+    await prefs.setStringList('music_history', newJson);
   }
 }

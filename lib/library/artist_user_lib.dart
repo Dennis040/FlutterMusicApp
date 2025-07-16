@@ -59,7 +59,10 @@ class _ArtistScreenState extends State<ArtistUserLib> {
 
   void _checkFollow() async {
     try {
-      isFollowing = await checkUserFollowArtist(widget.userId!, widget.artistID);
+      isFollowing = await checkUserFollowArtist(
+        widget.userId!,
+        widget.artistID,
+      );
     } catch (e) {
       debugPrint('Lỗi: $e');
     }

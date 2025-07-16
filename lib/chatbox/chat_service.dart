@@ -14,16 +14,11 @@ class ChatService {
         'Accept': 'application/json',
       };
 
-      final body = jsonEncode({
-        'message': message,
-        'userId': userId,
-      });
+      final body = jsonEncode({'message': message, 'userId': userId});
 
-      final response = await http.post(
-        url,
-        headers: headers,
-        body: body,
-      ).timeout(timeout);
+      final response = await http
+          .post(url, headers: headers, body: body)
+          .timeout(timeout);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -80,10 +75,7 @@ class ChatService {
         throw Exception('Failed to load suggestions');
       }
     } catch (e) {
-      return SuggestionsResponse(
-        popularQueries: [],
-        quickActions: [],
-      );
+      return SuggestionsResponse(popularQueries: [], quickActions: []);
     }
   }
 
@@ -139,9 +131,11 @@ class SuggestionsResponse {
   factory SuggestionsResponse.fromJson(Map<String, dynamic> json) {
     return SuggestionsResponse(
       popularQueries: List<String>.from(json['popularQueries'] ?? []),
-      quickActions: (json['quickActions'] as List?)
-          ?.map((item) => QuickAction.fromJson(item))
-          .toList() ?? [],
+      quickActions:
+          (json['quickActions'] as List?)
+              ?.map((item) => QuickAction.fromJson(item))
+              .toList() ??
+          [],
     );
   }
 }
@@ -150,16 +144,10 @@ class QuickAction {
   final String text;
   final String query;
 
-  QuickAction({
-    required this.text,
-    required this.query,
-  });
+  QuickAction({required this.text, required this.query});
 
   factory QuickAction.fromJson(Map<String, dynamic> json) {
-    return QuickAction(
-      text: json['text'] ?? '',
-      query: json['query'] ?? '',
-    );
+    return QuickAction(text: json['text'] ?? '', query: json['query'] ?? '');
   }
 }
 
@@ -167,16 +155,15 @@ class SearchResponse {
   final List<SearchResult> results;
   final int count;
 
-  SearchResponse({
-    required this.results,
-    required this.count,
-  });
+  SearchResponse({required this.results, required this.count});
 
   factory SearchResponse.fromJson(Map<String, dynamic> json) {
     return SearchResponse(
-      results: (json['results'] as List?)
-          ?.map((item) => SearchResult.fromJson(item))
-          .toList() ?? [],
+      results:
+          (json['results'] as List?)
+              ?.map((item) => SearchResult.fromJson(item))
+              .toList() ??
+          [],
       count: json['count'] ?? 0,
     );
   }
@@ -214,7 +201,9 @@ class SearchResult {
 // Extension methods for better error handling
 extension ChatServiceExtensions on ChatService {
   static bool isNetworkError(String error) {
-    return error.contains('mạng') || error.contains('internet') || error.contains('kết nối');
+    return error.contains('mạng') ||
+        error.contains('internet') ||
+        error.contains('kết nối');
   }
 
   static bool isServerError(String error) {

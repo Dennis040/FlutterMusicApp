@@ -31,7 +31,7 @@ void main() async {
       androidNotificationChannelId: 'com.example.app.channel.audio',
       androidNotificationChannelName: 'Music Playback',
       androidNotificationOngoing: true,
-      androidNotificationIcon: 'drawable/ic_notification'
+      androidNotificationIcon: 'drawable/ic_notification',
     ),
   );
 

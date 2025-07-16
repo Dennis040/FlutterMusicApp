@@ -39,7 +39,8 @@ class _MusicChatScreenState extends State<MusicChatScreen>
   void _addWelcomeMessage() {
     _addMessage(
       ChatMessage(
-        text: "Xin chào! Tôi là Music AI Assistant 🎵\n\n"
+        text:
+            "Xin chào! Tôi là Music AI Assistant 🎵\n\n"
             "Tôi có thể giúp bạn:\n"
             "• Tìm kiếm bài hát theo tên hoặc nghệ sĩ\n"
             "• Thông tin về nghệ sĩ và album\n"
@@ -70,8 +71,8 @@ class _MusicChatScreenState extends State<MusicChatScreen>
     try {
       // Call API with userId
       final response = await ChatService.sendMessage(
-        userMessage, 
-        userId: widget.userId
+        userMessage,
+        userId: widget.userId,
       );
 
       if (response.success) {
@@ -86,7 +87,8 @@ class _MusicChatScreenState extends State<MusicChatScreen>
       } else {
         _addMessage(
           ChatMessage(
-            text: response.error ?? 
+            text:
+                response.error ??
                 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.',
             isUser: false,
             timestamp: DateTime.now(),
@@ -240,15 +242,16 @@ class _MusicChatScreenState extends State<MusicChatScreen>
                           horizontal: 20,
                           vertical: 12,
                         ),
-                        suffixIcon: _messageController.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  _messageController.clear();
-                                  setState(() {});
-                                },
-                              )
-                            : null,
+                        suffixIcon:
+                            _messageController.text.isNotEmpty
+                                ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _messageController.clear();
+                                    setState(() {});
+                                  },
+                                )
+                                : null,
                       ),
                       onSubmitted: (_) => _sendMessage(),
                       enabled: !_isLoading,
@@ -375,11 +378,12 @@ class ChatBubble extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  gradient: message.isUser
-                      ? const LinearGradient(
-                          colors: [Colors.deepPurple, Colors.purple],
-                        )
-                      : null,
+                  gradient:
+                      message.isUser
+                          ? const LinearGradient(
+                            colors: [Colors.deepPurple, Colors.purple],
+                          )
+                          : null,
                   color: message.isUser ? null : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
@@ -409,18 +413,20 @@ class ChatBubble extends StatelessWidget {
                           Icon(
                             Icons.music_note,
                             size: 12,
-                            color: message.isUser
-                                ? Colors.white70
-                                : Colors.deepPurple,
+                            color:
+                                message.isUser
+                                    ? Colors.white70
+                                    : Colors.deepPurple,
                           ),
                           const SizedBox(width: 4),
                         ],
                         Text(
                           '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
                           style: TextStyle(
-                            color: message.isUser
-                                ? Colors.white70
-                                : Colors.grey[600],
+                            color:
+                                message.isUser
+                                    ? Colors.white70
+                                    : Colors.grey[600],
                             fontSize: 12,
                           ),
                         ),

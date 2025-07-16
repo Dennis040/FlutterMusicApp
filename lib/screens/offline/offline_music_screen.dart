@@ -45,7 +45,7 @@ class _OfflineMusicScreenState extends State<OfflineMusicScreen> {
       await _downloadManager.initHive();
       final songs = _downloadManager.getAllDownloadedSongs();
       final totalSize = await _downloadManager.getTotalDownloadSize();
-      
+
       setState(() {
         _downloadedSongs = songs;
         _totalSize = _downloadManager.formatFileSize(totalSize);
@@ -67,35 +67,46 @@ class _OfflineMusicScreenState extends State<OfflineMusicScreen> {
   Future<void> _playAllSongs() async {
     if (_downloadedSongs.isEmpty) return;
 
-    final mediaItems = _downloadedSongs.map((song) => MediaItem(
-      id: song.localPath,
-      title: song.songName,
-      artist: song.artistName,
-      artUri: Uri.file(song.imagePath),
-      duration: Duration.zero,
-    )).toList();
+    final mediaItems =
+        _downloadedSongs
+            .map(
+              (song) => MediaItem(
+                id: song.localPath,
+                title: song.songName,
+                artist: song.artistName,
+                artUri: Uri.file(song.imagePath),
+                duration: Duration.zero,
+              ),
+            )
+            .toList();
     await (globalAudioHandler as MyAudioHandler).addQueueItems(mediaItems);
     await (globalAudioHandler as MyAudioHandler).play();
 
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PlayingMusicScreen(
-          downloadedSongs: _downloadedSongs,
-          initialIndex: 0,
-        ),
+        builder:
+            (context) => PlayingMusicScreen(
+              downloadedSongs: _downloadedSongs,
+              initialIndex: 0,
+            ),
       ),
     );
   }
 
   Future<void> _playSong(int index) async {
-    final mediaItems = _downloadedSongs.map((song) => MediaItem(
-      id: song.localPath,
-      title: song.songName,
-      artist: song.artistName,
-      artUri: Uri.file(song.imagePath),
-      duration: Duration.zero,
-    )).toList();
+    final mediaItems =
+        _downloadedSongs
+            .map(
+              (song) => MediaItem(
+                id: song.localPath,
+                title: song.songName,
+                artist: song.artistName,
+                artUri: Uri.file(song.imagePath),
+                duration: Duration.zero,
+              ),
+            )
+            .toList();
 
     await (globalAudioHandler as MyAudioHandler).addQueueItems(mediaItems);
     await (globalAudioHandler as MyAudioHandler).skipToQueueItem(index);
@@ -104,10 +115,11 @@ class _OfflineMusicScreenState extends State<OfflineMusicScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => PlayingMusicScreen(
-          downloadedSongs: _downloadedSongs,
-          initialIndex: index,
-        ),
+        builder:
+            (context) => PlayingMusicScreen(
+              downloadedSongs: _downloadedSongs,
+              initialIndex: index,
+            ),
       ),
     );
   }
@@ -115,24 +127,31 @@ class _OfflineMusicScreenState extends State<OfflineMusicScreen> {
   Future<void> _deleteSong(DownloadedSong song) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: SpotifyColors.surface,
-        title: Text('Xóa bài hát', style: TextStyle(color: SpotifyColors.onSurface)),
-        content: Text(
-          'Bạn có chắc chắn muốn xóa "${song.songName}"?',
-          style: TextStyle(color: SpotifyColors.onSurfaceVariant),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Hủy', style: TextStyle(color: SpotifyColors.onSurfaceVariant)),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: SpotifyColors.surface,
+            title: Text(
+              'Xóa bài hát',
+              style: TextStyle(color: SpotifyColors.onSurface),
+            ),
+            content: Text(
+              'Bạn có chắc chắn muốn xóa "${song.songName}"?',
+              style: TextStyle(color: SpotifyColors.onSurfaceVariant),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(
+                  'Hủy',
+                  style: TextStyle(color: SpotifyColors.onSurfaceVariant),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text('Xóa', style: TextStyle(color: Colors.red)),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text('Xóa', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
     );
 
     if (confirmed == true) {
@@ -167,13 +186,16 @@ class _OfflineMusicScreenState extends State<OfflineMusicScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(SpotifyColors.primary),
-              ),
-            )
-          : _downloadedSongs.isEmpty
+      body:
+          _isLoading
+              ? Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    SpotifyColors.primary,
+                  ),
+                ),
+              )
+              : _downloadedSongs.isEmpty
               ? _buildEmptyState()
               : _buildSongList(),
     );
@@ -230,11 +252,7 @@ class _OfflineMusicScreenState extends State<OfflineMusicScreen> {
                   ),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  Icons.download_done,
-                  color: Colors.white,
-                  size: 32,
-                ),
+                child: Icon(Icons.download_done, color: Colors.white, size: 32),
               ),
               SizedBox(width: 16),
               Expanded(
@@ -286,7 +304,10 @@ class _OfflineMusicScreenState extends State<OfflineMusicScreen> {
                   // TODO: Implement shuffle
                 },
                 icon: Icon(Icons.shuffle, color: SpotifyColors.onSurface),
-                label: Text('Trộn bài', style: TextStyle(color: SpotifyColors.onSurface)),
+                label: Text(
+                  'Trộn bài',
+                  style: TextStyle(color: SpotifyColors.onSurface),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.transparent,
                   side: BorderSide(color: SpotifyColors.onSurfaceVariant),
@@ -327,16 +348,14 @@ class _OfflineMusicScreenState extends State<OfflineMusicScreen> {
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: File(song.imagePath).existsSync()
-              ? Image.file(
-                  File(song.imagePath),
-                  fit: BoxFit.cover,
-                )
-              : Icon(
-                  Icons.music_note,
-                  color: SpotifyColors.onSurfaceVariant,
-                  size: 32,
-                ),
+          child:
+              File(song.imagePath).existsSync()
+                  ? Image.file(File(song.imagePath), fit: BoxFit.cover)
+                  : Icon(
+                    Icons.music_note,
+                    color: SpotifyColors.onSurfaceVariant,
+                    size: 32,
+                  ),
         ),
       ),
       title: Text(
@@ -351,28 +370,26 @@ class _OfflineMusicScreenState extends State<OfflineMusicScreen> {
       ),
       subtitle: Text(
         song.artistName,
-        style: TextStyle(
-          color: SpotifyColors.onSurfaceVariant,
-          fontSize: 14,
-        ),
+        style: TextStyle(color: SpotifyColors.onSurfaceVariant, fontSize: 14),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
       trailing: PopupMenuButton(
         icon: Icon(Icons.more_vert, color: SpotifyColors.onSurfaceVariant),
         color: SpotifyColors.surface,
-        itemBuilder: (context) => [
-          PopupMenuItem(
-            value: 'delete',
-            child: Row(
-              children: [
-                Icon(Icons.delete, color: Colors.red),
-                SizedBox(width: 12),
-                Text('Xóa', style: TextStyle(color: Colors.red)),
-              ],
-            ),
-          ),
-        ],
+        itemBuilder:
+            (context) => [
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete, color: Colors.red),
+                    SizedBox(width: 12),
+                    Text('Xóa', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
         onSelected: (value) {
           if (value == 'delete') {
             _deleteSong(song);
@@ -408,7 +425,7 @@ class _PlayingMusicScreenState extends State<PlayingMusicScreen>
   bool _isRepeating = false;
   Duration _currentPosition = Duration.zero;
   Duration _totalDuration = Duration.zero;
-  
+
   late AnimationController _rotationController;
   late AnimationController _playButtonController;
 
@@ -417,12 +434,12 @@ class _PlayingMusicScreenState extends State<PlayingMusicScreen>
     super.initState();
     _currentIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _currentIndex);
-    
+
     _rotationController = AnimationController(
       duration: Duration(seconds: 10),
       vsync: this,
     );
-    
+
     _playButtonController = AnimationController(
       duration: Duration(milliseconds: 200),
       vsync: this,
@@ -432,7 +449,6 @@ class _PlayingMusicScreenState extends State<PlayingMusicScreen>
   }
 
   void _setupAudioHandler() {
-    
     // Listen to playback state
     (globalAudioHandler as MyAudioHandler).playbackState.listen((state) {
       if (mounted) {
@@ -440,7 +456,7 @@ class _PlayingMusicScreenState extends State<PlayingMusicScreen>
           _isPlaying = state.playing;
           _currentPosition = state.updatePosition;
         });
-        
+
         if (_isPlaying) {
           _rotationController.repeat();
           _playButtonController.forward();
@@ -626,18 +642,25 @@ class _PlayingMusicScreenState extends State<PlayingMusicScreen>
                       SliderTheme(
                         data: SliderTheme.of(context).copyWith(
                           activeTrackColor: SpotifyColors.primary,
-                          inactiveTrackColor: SpotifyColors.onSurfaceVariant.withOpacity(0.3),
+                          inactiveTrackColor: SpotifyColors.onSurfaceVariant
+                              .withOpacity(0.3),
                           thumbColor: SpotifyColors.primary,
                           overlayColor: SpotifyColors.primary.withOpacity(0.2),
-                          thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
+                          thumbShape: RoundSliderThumbShape(
+                            enabledThumbRadius: 6,
+                          ),
                           trackHeight: 4,
                         ),
                         child: Slider(
                           value: _currentPosition.inMilliseconds.toDouble(),
                           max: _totalDuration.inMilliseconds.toDouble(),
                           onChanged: (value) {
-                            final position = Duration(milliseconds: value.toInt());
-                            (globalAudioHandler as MyAudioHandler).seek(position);
+                            final position = Duration(
+                              milliseconds: value.toInt(),
+                            );
+                            (globalAudioHandler as MyAudioHandler).seek(
+                              position,
+                            );
                           },
                         ),
                       ),
@@ -675,7 +698,10 @@ class _PlayingMusicScreenState extends State<PlayingMusicScreen>
                       IconButton(
                         icon: Icon(
                           Icons.shuffle,
-                          color: _isShuffled ? SpotifyColors.primary : SpotifyColors.onSurfaceVariant,
+                          color:
+                              _isShuffled
+                                  ? SpotifyColors.primary
+                                  : SpotifyColors.onSurfaceVariant,
                         ),
                         onPressed: _toggleShuffle,
                       ),
@@ -715,7 +741,10 @@ class _PlayingMusicScreenState extends State<PlayingMusicScreen>
                       IconButton(
                         icon: Icon(
                           Icons.repeat,
-                          color: _isRepeating ? SpotifyColors.primary : SpotifyColors.onSurfaceVariant,
+                          color:
+                              _isRepeating
+                                  ? SpotifyColors.primary
+                                  : SpotifyColors.onSurfaceVariant,
                         ),
                         onPressed: _toggleRepeat,
                       ),
@@ -774,19 +803,17 @@ class _PlayingMusicScreenState extends State<PlayingMusicScreen>
               child: child,
             );
           },
-          child: File(song.imagePath).existsSync()
-              ? Image.file(
-                  File(song.imagePath),
-                  fit: BoxFit.cover,
-                )
-              : Container(
-                  color: SpotifyColors.surface,
-                  child: Icon(
-                    Icons.music_note,
-                    color: SpotifyColors.onSurfaceVariant,
-                    size: 100,
+          child:
+              File(song.imagePath).existsSync()
+                  ? Image.file(File(song.imagePath), fit: BoxFit.cover)
+                  : Container(
+                    color: SpotifyColors.surface,
+                    child: Icon(
+                      Icons.music_note,
+                      color: SpotifyColors.onSurfaceVariant,
+                      size: 100,
+                    ),
                   ),
-                ),
         ),
       ),
     );

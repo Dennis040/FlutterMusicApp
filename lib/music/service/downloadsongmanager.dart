@@ -1,19 +1,20 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
-import 'package:flutter/foundation.dart';
-import 'package:flutter_music_app/model/song.dart';
-import 'package:hive/hive.dart';
-import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:flutter_music_app/model/downloadedsong.dart';
-import 'package:crypto/crypto.dart';
+// import 'dart:async';
+// import 'dart:convert';
+// import 'dart:io';
+// import 'package:flutter/foundation.dart';
+// import 'package:flutter_music_app/model/song.dart';
+// import 'package:hive/hive.dart';
+// import 'package:dio/dio.dart';
+// import 'package:path_provider/path_provider.dart';
+// import 'package:permission_handler/permission_handler.dart';
+// import 'dart:typed_data';
+// import 'package:flutter_music_app/model/downloadedsong.dart';
 
-class DownloadManager {
-  static final DownloadManager _instance = DownloadManager._internal();
-  factory DownloadManager() => _instance;
-  DownloadManager._internal();
+
+// class DownloadManager {
+//   static final DownloadManager _instance = DownloadManager._internal();
+//   factory DownloadManager() => _instance;
+//   DownloadManager._internal();
 
   final Dio _dio = Dio();
   final Map<String, StreamController<double>> _downloadProgress = {};
@@ -149,24 +150,20 @@ class DownloadManager {
         lrcPath: lrcLocalPath,
       );
 
-      await downloadedSongsBox.put(song.songId, downloadedSong);
-      _downloadProgress[song.songId.toString()]?.add(1.0);
-
-      return filePath;
-    } catch (e) {
-      debugPrint('Download error: $e');
-      if (_downloadProgress[song.songId.toString()]?.isClosed == false) {
-        _downloadProgress[song.songId.toString()]?.addError(e);
-      }
-      return null;
-    } finally {
-      _cancelTokens.remove(song.songId.toString());
-      if (_downloadProgress[song.songId.toString()]?.isClosed == false) {
-        _downloadProgress[song.songId.toString()]?.close();
-      }
-      _downloadProgress.remove(song.songId.toString());
-    }
-  }
+//       await downloadedSongsBox.put(song.songId, downloadedSong);
+//       _downloadProgress[song.songId]?.add(1.0);
+      
+//       return filePath;
+//     } catch (e) {
+//       debugPrint('Download error: $e');
+//       _downloadProgress[song.songId]?.addError(e);
+//       return null;
+//     } finally {
+//       _cancelTokens.remove(song.songId);
+//       _downloadProgress[song.songId]?.close();
+//       _downloadProgress.remove(song.songId);
+//     }
+//   }
 
   void cancelDownload(String songId) {
     _cancelTokens[songId]?.cancel();
@@ -183,20 +180,20 @@ class DownloadManager {
     return downloadedSongsBox.get(songId);
   }
 
-  Future<void> deleteDownload(String songId) async {
-    final downloadedSong = downloadedSongsBox.get(songId);
-    if (downloadedSong != null) {
-      // Delete files
-      final audioFile = File(downloadedSong.localPath);
-      final imageFile = File(downloadedSong.imagePath);
-
-      if (await audioFile.exists()) await audioFile.delete();
-      if (await imageFile.exists()) await imageFile.delete();
-
-      if (downloadedSong.lrcPath != null) {
-        final lrcFile = File(downloadedSong.lrcPath!);
-        if (await lrcFile.exists()) await lrcFile.delete();
-      }
+//   Future<void> deleteDownload(String songId) async {
+//     final downloadedSong = downloadedSongsBox.get(songId);
+//     if (downloadedSong != null) {
+//       // Delete files
+//       final audioFile = File(downloadedSong.localPath);
+//       final imageFile = File(downloadedSong.imagePath);
+      
+//       if (await audioFile.exists()) await audioFile.delete();
+//       if (await imageFile.exists()) await imageFile.delete();
+      
+//       if (downloadedSong.lrcPath != null) {
+//         final lrcFile = File(downloadedSong.lrcPath!);
+//         if (await lrcFile.exists()) await lrcFile.delete();
+//       }
 
       // Remove from Hive
       await downloadedSongsBox.delete(songId);
@@ -215,11 +212,10 @@ class DownloadManager {
     return totalSize;
   }
 
-  String formatFileSize(int bytes) {
-    if (bytes < 1024) return '$bytes B';
-    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024)
-      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
-    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
-  }
-}
+//   String formatFileSize(int bytes) {
+//     if (bytes < 1024) return '$bytes B';
+//     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+//     if (bytes < 1024 * 1024 * 1024) return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+//     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
+//   }
+// }
