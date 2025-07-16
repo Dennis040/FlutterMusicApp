@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_music_app/chatbox/chat_service.dart';
-import 'package:flutter_music_app/chatbox/quickaction.dart';
 
 class MusicChatScreen extends StatefulWidget {
   final int? userId;
@@ -17,7 +16,6 @@ class _MusicChatScreenState extends State<MusicChatScreen>
   final ScrollController _scrollController = ScrollController();
   final List<ChatMessage> _messages = [];
   bool _isLoading = false;
-  bool _showQuickActions = true;
   late AnimationController _animationController;
 
   @override
@@ -27,7 +25,6 @@ class _MusicChatScreenState extends State<MusicChatScreen>
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-
     _addWelcomeMessage();
   }
 
@@ -42,20 +39,17 @@ class _MusicChatScreenState extends State<MusicChatScreen>
   void _addWelcomeMessage() {
     _addMessage(
       ChatMessage(
-        text:
-            "Xin chào! Tôi là Music AI Assistant 🎵\n\nTôi có thể giúp bạn:\n• Tìm kiếm bài hát và nghệ sĩ\n• Gợi ý nhạc phù hợp\n• Thống kê và phân tích\n• Trả lời các câu hỏi về âm nhạc\n\nHãy thử các câu hỏi gợi ý bên dưới!",
+        text: "Xin chào! Tôi là Music AI Assistant 🎵\n\n"
+            "Tôi có thể giúp bạn:\n"
+            "• Tìm kiếm bài hát theo tên hoặc nghệ sĩ\n"
+            "• Thông tin về nghệ sĩ và album\n"
+            "• Thống kê về thư viện nhạc\n"
+            "• Gợi ý nhạc theo thể loại\n\n"
+            "Hãy hỏi tôi bất cứ điều gì về âm nhạc!",
         isUser: false,
         timestamp: DateTime.now(),
       ),
     );
-  }
-
-  void _handleQuickAction(String query) {
-    _messageController.text = query;
-    setState(() {
-      _showQuickActions = false;
-    });
-    _sendMessage();
   }
 
   Future<void> _sendMessage() async {
@@ -63,13 +57,6 @@ class _MusicChatScreenState extends State<MusicChatScreen>
 
     final userMessage = _messageController.text.trim();
     _messageController.clear();
-
-    // Hide quick actions after first user message
-    if (_showQuickActions) {
-      setState(() {
-        _showQuickActions = false;
-      });
-    }
 
     // Add user message
     _addMessage(
@@ -81,8 +68,11 @@ class _MusicChatScreenState extends State<MusicChatScreen>
     });
 
     try {
-      // Call your API here
-      final response = await ChatService.sendMessage(userMessage);
+      // Call API with userId
+      final response = await ChatService.sendMessage(
+        userMessage, 
+        userId: widget.userId
+      );
 
       if (response.success) {
         _addMessage(
@@ -96,8 +86,7 @@ class _MusicChatScreenState extends State<MusicChatScreen>
       } else {
         _addMessage(
           ChatMessage(
-            text:
-                response.error ??
+            text: response.error ?? 
                 'Xin lỗi, đã có lỗi xảy ra. Vui lòng thử lại sau.',
             isUser: false,
             timestamp: DateTime.now(),
@@ -140,7 +129,6 @@ class _MusicChatScreenState extends State<MusicChatScreen>
   void _resetChat() {
     setState(() {
       _messages.clear();
-      _showQuickActions = true;
     });
     _addWelcomeMessage();
   }
@@ -182,32 +170,8 @@ class _MusicChatScreenState extends State<MusicChatScreen>
               child: ListView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.all(16),
-                itemCount: _messages.length + (_showQuickActions ? 1 : 0),
+                itemCount: _messages.length,
                 itemBuilder: (context, index) {
-                  if (_showQuickActions && index == _messages.length) {
-                    return AnimatedBuilder(
-                      animation: _animationController,
-                      builder: (context, child) {
-                        return SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, 0.3),
-                            end: Offset.zero,
-                          ).animate(
-                            CurvedAnimation(
-                              parent: _animationController,
-                              curve: Curves.easeOut,
-                            ),
-                          ),
-                          child: FadeTransition(
-                            opacity: _animationController,
-                            child: QuickActionsWidget(
-                              onActionTap: _handleQuickAction,
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  }
                   return AnimatedChatBubble(
                     message: _messages[index],
                     index: index,
@@ -223,7 +187,7 @@ class _MusicChatScreenState extends State<MusicChatScreen>
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  SizedBox(
+                  const SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
@@ -276,16 +240,15 @@ class _MusicChatScreenState extends State<MusicChatScreen>
                           horizontal: 20,
                           vertical: 12,
                         ),
-                        suffixIcon:
-                            _messageController.text.isNotEmpty
-                                ? IconButton(
-                                  icon: const Icon(Icons.clear),
-                                  onPressed: () {
-                                    _messageController.clear();
-                                    setState(() {});
-                                  },
-                                )
-                                : null,
+                        suffixIcon: _messageController.text.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _messageController.clear();
+                                  setState(() {});
+                                },
+                              )
+                            : null,
                       ),
                       onSubmitted: (_) => _sendMessage(),
                       enabled: !_isLoading,
@@ -299,8 +262,8 @@ class _MusicChatScreenState extends State<MusicChatScreen>
                     onPressed: _isLoading ? null : _sendMessage,
                     backgroundColor:
                         _isLoading ? Colors.grey : Colors.deepPurple,
-                    child: const Icon(Icons.send, color: Colors.white),
                     mini: true,
+                    child: const Icon(Icons.send, color: Colors.white),
                   ),
                 ],
               ),
@@ -412,12 +375,11 @@ class ChatBubble extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  gradient:
-                      message.isUser
-                          ? const LinearGradient(
-                            colors: [Colors.deepPurple, Colors.purple],
-                          )
-                          : null,
+                  gradient: message.isUser
+                      ? const LinearGradient(
+                          colors: [Colors.deepPurple, Colors.purple],
+                        )
+                      : null,
                   color: message.isUser ? null : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
@@ -447,20 +409,18 @@ class ChatBubble extends StatelessWidget {
                           Icon(
                             Icons.music_note,
                             size: 12,
-                            color:
-                                message.isUser
-                                    ? Colors.white70
-                                    : Colors.deepPurple,
+                            color: message.isUser
+                                ? Colors.white70
+                                : Colors.deepPurple,
                           ),
                           const SizedBox(width: 4),
                         ],
                         Text(
                           '${message.timestamp.hour}:${message.timestamp.minute.toString().padLeft(2, '0')}',
                           style: TextStyle(
-                            color:
-                                message.isUser
-                                    ? Colors.white70
-                                    : Colors.grey[600],
+                            color: message.isUser
+                                ? Colors.white70
+                                : Colors.grey[600],
                             fontSize: 12,
                           ),
                         ),
@@ -484,4 +444,19 @@ class ChatBubble extends StatelessWidget {
       ),
     );
   }
+}
+
+// Bạn cần thêm class ChatMessage nếu chưa có
+class ChatMessage {
+  final String text;
+  final bool isUser;
+  final DateTime timestamp;
+  final bool hasContext;
+
+  ChatMessage({
+    required this.text,
+    required this.isUser,
+    required this.timestamp,
+    this.hasContext = false,
+  });
 }
