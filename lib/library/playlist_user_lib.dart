@@ -577,31 +577,62 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                             ),
                           ),
                           onTap: () {
+                            final rootContext =
+                                context; // lưu context gốc trước async
+
                             showDialog(
                               context: context,
                               builder:
                                   (context) => AlertDialog(
-                                    backgroundColor: AppColors.background,
-                                    title: Text(
-                                      "Xác nhận xoá",
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    content: Text(
-                                      "Bạn có chắc chắn muốn xoá playlist này?",
-                                      style: TextStyle(color: Colors.white70),
-                                    ),
+                                    title: Text("Xác nhận xoá"),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(context),
-                                        child: Text(
-                                          "Huỷ",
-                                          style: TextStyle(color: Colors.grey),
-                                        ),
+                                        child: Text("Huỷ"),
                                       ),
                                       TextButton(
-                                        onPressed: () {
-                                          Navigator.pop(context); // Đóng dialog
-                                          // TODO: Gọi API xoá
+                                        onPressed: () async {
+                                          Navigator.pop(context); // đóng dialog
+
+                                          await Future.delayed(
+                                            Duration(milliseconds: 100),
+                                          );
+
+                                          final url = Uri.parse(
+                                            '${ip}PlaylistUsers/${widget.playlistID}',
+                                          );
+                                          final response = await http.delete(
+                                            url,
+                                          );
+
+                                          if (!mounted) return;
+
+                                          if (response.statusCode == 204) {
+                                            // Dùng rootContext đã lưu
+                                            Navigator.pop(
+                                              rootContext,
+                                              true,
+                                            ); // ✅ an toàn
+                                            ScaffoldMessenger.of(
+                                              rootContext,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Xoá playlist thành công',
+                                                ),
+                                              ),
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(
+                                              rootContext,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Xoá playlist thất bại',
+                                                ),
+                                              ),
+                                            );
+                                          }
                                         },
                                         child: Text(
                                           "Xoá",
@@ -1442,9 +1473,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                                 initialValue: initialName,
                                 onChanged: (value) {
                                   editedName = value;
-                                  onNameChanged(
-                                    value,
-                                  );
+                                  onNameChanged(value);
                                 },
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(

@@ -165,8 +165,8 @@ class _LibraryTabState extends State<LibraryTab> {
         'Danh sách phát',
         style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
       ),
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final result = await Navigator.push(
           context,
           MaterialPageRoute(
             builder:
@@ -176,6 +176,12 @@ class _LibraryTabState extends State<LibraryTab> {
                 ),
           ),
         );
+        if (result == true) {
+          // Xoá playlist khỏi danh sách trong state
+          setState(() {
+            _playlists.removeWhere((p) => p.id == playlist.id);
+          });
+        }
       },
     );
   }
