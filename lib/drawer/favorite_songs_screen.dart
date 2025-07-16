@@ -120,6 +120,18 @@ class _FavoriteSongsScreenState extends State<FavoriteSongsScreen>
                       vertical: 6,
                     ),
                     child: ListTile(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder:
+                                (context) => PlayingMusicInterface(
+                                  songs: _songs,
+                                  currentIndex: index,
+                                ),
+                          ),
+                        );
+                      },
                       leading: ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.network(
@@ -149,35 +161,12 @@ class _FavoriteSongsScreenState extends State<FavoriteSongsScreen>
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(
-                              Icons.play_arrow,
-                              color: AppColors.primaryColor,
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) => PlayingMusicInterface(
-                                        songs: _songs,
-                                        currentIndex: index,
-                                      ),
-                                ),
-                              );
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.favorite,
-                              color: AppColors.primaryColor,
-                            ),
-                            onPressed: () => removeFavorite(song.songId),
-                          ),
-                        ],
+                      trailing: IconButton(
+                        icon: const Icon(
+                          Icons.favorite,
+                          color: AppColors.primaryColor,
+                        ),
+                        onPressed: () => removeFavorite(song.songId),
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
