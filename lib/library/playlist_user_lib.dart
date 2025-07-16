@@ -30,7 +30,6 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
   List<Song> _filteredSongs = [];
   bool isLoadingSongs = true;
   final GlobalKey<AnimatedListState> _listKey = GlobalKey<AnimatedListState>();
-  TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -1308,6 +1307,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
+        String editedName = initialName;
         return DraggableScrollableSheet(
           initialChildSize: 0.95,
           expand: false,
@@ -1346,6 +1346,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                               onTap: () async {
                                 try {
                                   // Cập nhật tên playlist
+                                  debugPrint('Tên Playlist: ${editedName}');
                                   final updateResponse = await http.put(
                                     Uri.parse(
                                       '${ip}PlaylistUsers/PLaylistUsersName/$playlistID',
@@ -1354,7 +1355,7 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                                       'Content-Type': 'application/json',
                                     },
                                     body: jsonEncode({
-                                      'playlistName': initialName,
+                                      'playlistName': editedName,
                                     }),
                                   );
                                   if (updateResponse.statusCode != 200) {
@@ -1362,6 +1363,12 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                                       'Không thể cập nhật playlist',
                                     );
                                   }
+                                  debugPrint(
+                                    'Status code: ${updateResponse.statusCode}',
+                                  );
+                                  debugPrint(
+                                    'Response body: ${updateResponse.body}',
+                                  );
 
                                   // Xoá các bài hát đã remove
                                   for (var song in removedSongs) {
@@ -1433,7 +1440,12 @@ class _PlaylistScreenState extends State<PlaylistUserLib> {
                             children: [
                               TextFormField(
                                 initialValue: initialName,
-                                onChanged: (value) => onNameChanged(value),
+                                onChanged: (value) {
+                                  editedName = value;
+                                  onNameChanged(
+                                    value,
+                                  );
+                                },
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(
                                   fontSize: 20,
