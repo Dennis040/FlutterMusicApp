@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_music_app/config/config.dart';
 import 'package:flutter_music_app/main.dart';
 import 'package:flutter_music_app/music/handle/audio_handler.dart';
+import 'package:flutter_music_app/music/service/downloadsongmanager.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:palette_generator/palette_generator.dart';
@@ -760,13 +761,16 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   Future<void> _downloadSong() async {
-    // TODO: Implement download functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Đang tải xuống: ${currentSong.songName}'),
-        backgroundColor: Colors.green,
-      ),
-    );
+    final filePath = await DownloadManager().downloadSong(currentSong);
+    if (filePath != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Đã tải xong: ${currentSong.songName}')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Tải thất bại'), backgroundColor: Colors.red),
+      );
+    }
   }
 
   Widget _buildSongInfo() {
@@ -807,11 +811,12 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
           ),
           Row(
             children: [
-              IconButton(
-                icon: Icon(Icons.download, color: Colors.white, size: 24),
-                onPressed: _downloadSong,
-                tooltip: 'Tải xuống',
-              ),
+              if (isPremium)
+                IconButton(
+                  icon: Icon(Icons.download, color: Colors.white, size: 24),
+                  onPressed: (){},//_downloadSong,
+                  tooltip: 'Tải xuống',
+                ),
               const SizedBox(width: 4),
               IconButton(
                 icon: Icon(

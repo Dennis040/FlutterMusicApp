@@ -1,4 +1,8 @@
 import 'package:hive/hive.dart';
+
+part 'downloadedsong.g.dart';
+
+
 @HiveType(typeId: 0)
 class DownloadedSong extends HiveObject {
   @HiveField(0)

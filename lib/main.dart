@@ -25,19 +25,13 @@ Future<void> requestNotificationPermission() async {
 late final AudioHandler globalAudioHandler;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // ⚠️ Thêm test device ID tại đây
-  // final requestConfiguration = RequestConfiguration(
-  //   testDeviceIds: ['0BB05E7669CCD3603D56D08166983789'],
-  // );
-  // MobileAds.instance.updateRequestConfiguration(requestConfiguration);
-
-  // await MobileAds.instance.initialize();
   globalAudioHandler = await AudioService.init(
     builder: () => MyAudioHandler(), // ✅ BẮT BUỘC
     config: const AudioServiceConfig(
       androidNotificationChannelId: 'com.example.app.channel.audio',
       androidNotificationChannelName: 'Music Playback',
       androidNotificationOngoing: true,
+      androidNotificationIcon: 'drawable/ic_notification'
     ),
   );
 
