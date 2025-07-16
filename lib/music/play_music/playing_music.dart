@@ -24,10 +24,6 @@ class PlayingMusicInterface extends StatefulWidget {
 
   final List<Song> songs;
   final int currentIndex;
-  // final VoidCallback onNext;
-  // final VoidCallback onPrevious;
-  // final ValueChanged<bool> onShuffle;
-  // final ValueChanged<LoopMode> onRepeat;
 
   @override
   State<PlayingMusicInterface> createState() => _PlayingMusicInterfaceState();
@@ -52,7 +48,6 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   late List<Song> shuffledList;
   late int currentIndex;
   late Song currentSong;
-  // late AudioPlayerManager audioPlayerManager;
   bool _isNexting = false;
   StreamSubscription<PlayerState>? _playerStateSub;
   StreamSubscription<MediaItem?>? _mediaItemSub;
@@ -84,16 +79,8 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     songs = widget.songs;
     currentIndex = widget.currentIndex;
     currentSong = songs[currentIndex];
-    // audioPlayerManager = AudioPlayerManager(songUrl: currentSong.linkSong!);
     _initPlayer();
     _generateColors();
-    // final mediaItem = MediaItem(
-    //   id: currentSong.linkSong!, // hoặc link bài nhạc
-    //   title: currentSong.songName,
-    //   artist: currentSong.artistName,
-    //   artUri: Uri.parse(currentSong.songImage),
-    // );
-    // globalAudioHandler.addQueueItem(mediaItem);
     _setupNotificationCallbacks();
     fetchUserProfile();
     _checkAndShowAd();
@@ -719,37 +706,50 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
         child: Hero(
           tag: 'album_art_${currentSong.songId}',
           child: Container(
-            width: MediaQuery.of(context).size.width * 0.7,
-            height: MediaQuery.of(context).size.width * 0.7,
+            width: MediaQuery.of(context).size.width * 0.75,
+            height: MediaQuery.of(context).size.width * 0.75,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color:
-                      paletteGenerator?.dominantColor?.color ??
-                      paletteGenerator?.dominantColor?.color ??
-                      defaultColor,
-                  blurRadius: 40,
-                  spreadRadius: 8,
+                  color: (paletteGenerator?.dominantColor?.color ??
+                          defaultColor)
+                      .withOpacity(0.6),
+                  blurRadius: 50,
+                  spreadRadius: 15,
+                ),
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 20,
+                  spreadRadius: 5,
                 ),
               ],
             ),
             child: RotationTransition(
               turns: _imageAnimationController,
               child: ClipOval(
-                child: Image.network(
-                  currentSong.songImage,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      color: Colors.grey[800],
-                      child: const Icon(
-                        Icons.music_note,
-                        size: 64,
-                        color: Colors.white,
-                      ),
-                    );
-                  },
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 2,
+                    ),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Image.network(
+                    currentSong.songImage,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        color: Colors.grey[800],
+                        child: const Icon(
+                          Icons.music_note,
+                          size: 64,
+                          color: Colors.white,
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -759,9 +759,19 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     );
   }
 
+  Future<void> _downloadSong() async {
+    // TODO: Implement download functionality
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Đang tải xuống: ${currentSong.songName}'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   Widget _buildSongInfo() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 24),
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -773,55 +783,72 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 Text(
                   currentSong.songName,
                   style: const TextStyle(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
                   textAlign: TextAlign.left,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Text(
                   currentSong.artistName!,
-                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w400,
+                  ),
                   textAlign: TextAlign.left,
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
-          IconButton(
-            icon: Icon(
-              isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: isFavorite ? Colors.pink : Colors.white,
-            ),
-            onPressed: () async {
-              final userId = await getUserIdFromToken();
-              final prefs = await SharedPreferences.getInstance();
-              final token = prefs.getString('accessToken');
-              final url = Uri.parse(
-                '${ip}Users/$userId/favorite-songs/${currentSong.songId}',
-              );
-              final headers =
-                  token != null ? {'Authorization': 'Bearer $token'} : null;
-              debugPrint(
-                'Toggle favorite: userId=$userId, songId=${currentSong.songId}, isFavorite=$isFavorite',
-              );
-              final response =
-                  isFavorite
-                      ? await http.delete(url, headers: headers)
-                      : await http.post(url, headers: headers);
-              debugPrint(
-                'Status: ${response.statusCode}, Body: ${response.body}',
-              );
-              if (response.statusCode == 200 ||
-                  response.statusCode == 201 ||
-                  response.statusCode == 204) {
-                setState(() {
-                  isFavorite = !isFavorite;
-                });
-              }
-            },
+          Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.download, color: Colors.white, size: 24),
+                onPressed: _downloadSong,
+                tooltip: 'Tải xuống',
+              ),
+              const SizedBox(width: 4),
+              IconButton(
+                icon: Icon(
+                  isFavorite ? Icons.favorite : Icons.favorite_border,
+                  color: isFavorite ? Colors.pink : Colors.white,
+                  size: 24,
+                ),
+                onPressed: () async {
+                  final userId = await getUserIdFromToken();
+                  final prefs = await SharedPreferences.getInstance();
+                  final token = prefs.getString('accessToken');
+                  final url = Uri.parse(
+                    '${ip}Users/$userId/favorite-songs/${currentSong.songId}',
+                  );
+                  final headers =
+                      token != null ? {'Authorization': 'Bearer $token'} : null;
+                  debugPrint(
+                    'Toggle favorite: userId=$userId, songId=${currentSong.songId}, isFavorite=$isFavorite',
+                  );
+                  final response =
+                      isFavorite
+                          ? await http.delete(url, headers: headers)
+                          : await http.post(url, headers: headers);
+                  debugPrint(
+                    'Status: ${response.statusCode}, Body: ${response.body}',
+                  );
+                  if (response.statusCode == 200 ||
+                      response.statusCode == 201 ||
+                      response.statusCode == 204) {
+                    setState(() {
+                      isFavorite = !isFavorite;
+                    });
+                  }
+                },
+                tooltip: isFavorite ? 'Bỏ yêu thích' : 'Yêu thích',
+              ),
+            ],
           ),
         ],
       ),
@@ -911,38 +938,41 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 Duration.zero;
             return Column(
               children: [
-                SliderTheme(
-                  data: SliderThemeData(
-                    trackHeight: 4,
-                    thumbShape: const RoundSliderThumbShape(
-                      enabledThumbRadius: 8,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: SliderTheme(
+                    data: SliderThemeData(
+                      trackHeight: 6,
+                      thumbShape: const RoundSliderThumbShape(
+                        enabledThumbRadius: 10,
+                      ),
+                      overlayShape: const RoundSliderOverlayShape(
+                        overlayRadius: 20,
+                      ),
+                      activeTrackColor: Colors.white,
+                      inactiveTrackColor: Colors.white.withOpacity(0.3),
+                      thumbColor: Colors.white,
+                      overlayColor: Colors.white.withOpacity(0.2),
                     ),
-                    overlayShape: const RoundSliderOverlayShape(
-                      overlayRadius: 16,
+                    child: Slider(
+                      value: position.inMilliseconds.toDouble().clamp(
+                        0,
+                        duration.inMilliseconds.toDouble(),
+                      ),
+                      max:
+                          duration.inMilliseconds.toDouble() > 0
+                              ? duration.inMilliseconds.toDouble()
+                              : 1,
+                      onChanged: (value) {
+                        (globalAudioHandler as MyAudioHandler).player.seek(
+                          Duration(milliseconds: value.toInt()),
+                        );
+                      },
                     ),
-                    activeTrackColor: Colors.white,
-                    inactiveTrackColor: Colors.white24,
-                    thumbColor: Colors.white,
-                    overlayColor: Colors.white24,
-                  ),
-                  child: Slider(
-                    value: position.inMilliseconds.toDouble().clamp(
-                      0,
-                      duration.inMilliseconds.toDouble(),
-                    ),
-                    max:
-                        duration.inMilliseconds.toDouble() > 0
-                            ? duration.inMilliseconds.toDouble()
-                            : 1,
-                    onChanged: (value) {
-                      (globalAudioHandler as MyAudioHandler).player.seek(
-                        Duration(milliseconds: value.toInt()),
-                      );
-                    },
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 32.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -950,14 +980,16 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                         '${position.inMinutes}:${(position.inSeconds % 60).toString().padLeft(2, '0')}',
                         style: const TextStyle(
                           color: Colors.white70,
-                          fontSize: 12,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                       Text(
                         '${duration.inMinutes}:${(duration.inSeconds % 60).toString().padLeft(2, '0')}',
                         style: const TextStyle(
                           color: Colors.white70,
-                          fontSize: 12,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
@@ -967,16 +999,22 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
             );
           },
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            IconButton(
-              icon: const Icon(Icons.skip_previous, color: Colors.white),
-              iconSize: 36,
-              onPressed: () async {
-                await _playPreviousSong();
-              },
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.skip_previous, color: Colors.white),
+                iconSize: 32,
+                onPressed: () async {
+                  await _playPreviousSong();
+                },
+              ),
             ),
             StreamBuilder<PlayerState>(
               stream:
@@ -991,37 +1029,62 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                     processingState == ProcessingState.buffering) {
                   return Container(
                     margin: const EdgeInsets.all(8.0),
-                    width: 48.0,
-                    height: 48.0,
-                    child: const CircularProgressIndicator(color: Colors.white),
+                    width: 64.0,
+                    height: 64.0,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.15),
+                    ),
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 3,
+                      ),
+                    ),
                   );
                 } else if (playing != true) {
-                  return IconButton(
-                    icon: const Icon(Icons.play_arrow, color: Colors.white),
-                    iconSize: 64,
-                    onPressed: () {
-                      (globalAudioHandler as MyAudioHandler).player.play();
-                      // MusicPlayerManager.resumeMusic();
-                    },
+                  return Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.15),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.play_arrow, color: Colors.white),
+                      iconSize: 48,
+                      onPressed: () {
+                        (globalAudioHandler as MyAudioHandler).player.play();
+                      },
+                    ),
                   );
                 } else {
-                  return IconButton(
-                    icon: const Icon(Icons.pause, color: Colors.white),
-                    iconSize: 64,
-                    onPressed: () {
-                      (globalAudioHandler as MyAudioHandler).player.pause();
-                      // MusicPlayerManager.pauseMusic();
-                    },
+                  return Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withOpacity(0.15),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.pause, color: Colors.white),
+                      iconSize: 48,
+                      onPressed: () {
+                        (globalAudioHandler as MyAudioHandler).player.pause();
+                      },
+                    ),
                   );
                 }
               },
             ),
-            IconButton(
-              icon: const Icon(Icons.skip_next, color: Colors.white),
-              iconSize: 36,
-              onPressed: () async {
-                await _playNextSong();
-              },
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.skip_next, color: Colors.white),
+                iconSize: 32,
+                onPressed: () async {
+                  await _playNextSong();
+                },
+              ),
             ),
           ],
         ),
@@ -1030,15 +1093,24 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
   }
 
   Widget _buildAdditionalControls() {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            IconButton(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color:
+                  _isShuffled
+                      ? Colors.green.withOpacity(0.2)
+                      : Colors.white.withOpacity(0.1),
+            ),
+            child: IconButton(
               icon: Icon(
                 Icons.shuffle,
                 color: _isShuffled ? Colors.green : Colors.white,
+                size: 22,
               ),
               onPressed: () {
                 setState(() {
@@ -1053,10 +1125,20 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 });
               },
             ),
-            IconButton(
+          ),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color:
+                  _loopMode == LoopMode.one
+                      ? Colors.green.withOpacity(0.2)
+                      : Colors.white.withOpacity(0.1),
+            ),
+            child: IconButton(
               icon: Icon(
                 _getRepeatIcon(),
                 color: _loopMode == LoopMode.one ? Colors.green : Colors.white,
+                size: 22,
               ),
               onPressed: () {
                 setState(() {
@@ -1067,22 +1149,39 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
                 });
               },
             ),
-            IconButton(
+          ),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.1),
+            ),
+            child: IconButton(
               icon: Icon(
                 _showLyrics ? Icons.album : Icons.lyrics,
                 color: Colors.white,
+                size: 22,
               ),
               onPressed: _toggleView,
             ),
-            IconButton(
-              icon: const Icon(Icons.playlist_play, color: Colors.white),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.1),
+            ),
+            child: IconButton(
+              icon: const Icon(
+                Icons.playlist_play,
+                color: Colors.white,
+                size: 22,
+              ),
               onPressed: () {
                 // TODO: Implement playlist view
               },
             ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
