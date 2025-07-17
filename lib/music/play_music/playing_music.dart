@@ -762,18 +762,18 @@ class _PlayingMusicInterfaceState extends State<PlayingMusicInterface>
     );
   }
 
-  Future<void> _downloadSong() async {
-    final filePath = await DownloadManager().downloadSong(currentSong);
-    if (filePath != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Đã tải xong: ${currentSong.songName}')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Tải thất bại'), backgroundColor: Colors.red),
-      );
-    }
-  }
+  // Future<void> _downloadSong() async {
+  //   final filePath = await DownloadManager().downloadSong(currentSong);
+  //   if (filePath != null) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Đã tải xong: ${currentSong.songName}')),
+  //     );
+  //   } else {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Tải thất bại'), backgroundColor: Colors.red),
+  //     );
+  //   }
+  // }
 
   Widget _buildSongInfo() {
     return Padding(

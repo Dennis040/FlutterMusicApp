@@ -132,10 +132,10 @@ class _HomeScreenState extends State<HomeScreen>
     final isPremium = currentUser['isPremium'] == 'true';
 
     if (!hasNetwork && isPremium) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => OfflineMusicScreen()),
-      );
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(builder: (context) => OfflineMusicScreen()),
+      // );
     } else {
       _pageController = PageController();
       _animationController = AnimationController(
