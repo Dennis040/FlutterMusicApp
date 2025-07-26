@@ -2,6 +2,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_music_app/music/handle/audio_handler.dart';
+import 'package:flutter_music_app/screens/auth/emailverification_screen.dart';
 import 'package:page_transition/page_transition.dart';
 import 'constants/app_colors.dart';
 import 'screens/auth/start_screen.dart';
